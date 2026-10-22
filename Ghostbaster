@@ -4,7 +4,6 @@ pcall(function()
     local RunService = game:GetService("RunService")
     local TweenService = game:GetService("TweenService")
     local StarterGui = game:GetService("StarterGui")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local Lighting = game:GetService("Lighting")
 
     local LocalPlayer = Players.LocalPlayer
@@ -27,36 +26,14 @@ pcall(function()
         end)
     end
 
-    local function getSafeGuiParent()
-        local pGui = LocalPlayer:FindFirstChild("PlayerGui")
-        if pGui then return pGui end
-        local ok, res = pcall(function()
-            if gethui then return gethui() end
-            return game:GetService("CoreGui")
-        end)
-        if ok and res then return res end
-        return LocalPlayer:WaitForChild("PlayerGui", 5)
-    end
-
-    local GuiParent = getSafeGuiParent()
-    if not GuiParent then return end
+    local pGui = LocalPlayer:WaitForChild("PlayerGui")
 
     pcall(function()
-        if GuiParent:FindFirstChild("GhostbusterModernUI") then
-            GuiParent.GhostbusterModernUI:Destroy()
-        end
-        if GuiParent:FindFirstChild("SimplewareThrowCounter") then
-            GuiParent.SimplewareThrowCounter:Destroy()
-        end
+        if pGui:FindFirstChild("Ghostbuster") then pGui.Ghostbuster:Destroy() end
+        if pGui:FindFirstChild("SimplewareThrowCounter") then pGui.SimplewareThrowCounter:Destroy() end
     end)
 
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "GhostbusterModernUI"
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.DisplayOrder = 99999
-    ScreenGui.Parent = GuiParent
-
-    -- Helper Draggable (Defined BEFORE any widget call)
+    -- ( UI Root & Draggable Helper )
     local function makeDraggable(frame, handle)
         local dragging, dragStart, startPos
         handle.InputBegan:Connect(function(input)
@@ -107,7 +84,14 @@ pcall(function()
         return true
     end
 
-    -- Toggle Button
+    -- ( Main ScreenGui - Exact Ghostbuster Tree )
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "Ghostbuster"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.DisplayOrder = 9999
+    ScreenGui.Parent = pGui
+
+    -- ( Mobile Toggle Button )
     local ToggleButton = Instance.new("ImageButton")
     ToggleButton.Name = "LogoToggleButton"
     ToggleButton.Size = UDim2.new(0, 48, 0, 48)
@@ -127,11 +111,11 @@ pcall(function()
     TBCorner.CornerRadius = UDim.new(0, 14)
     TBCorner.Parent = ToggleButton
 
-    -- MainFrame
+    -- ( Main Container Frame )
     local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 460, 0, 390)
-    MainFrame.Position = UDim2.new(0.5, -230, 0.5, -195)
+    MainFrame.Name = "Frame"
+    MainFrame.Size = UDim2.new(0, 460, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -230, 0.5, -200)
     MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 24)
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = true
@@ -181,7 +165,7 @@ pcall(function()
         }):Play()
     end)
 
-    -- Sidebar Tabs
+    -- ( Tabs Navigation )
     local TabBar = Instance.new("Frame")
     TabBar.Size = UDim2.new(0, 95, 1, -42)
     TabBar.Position = UDim2.new(0, 0, 0, 42)
@@ -429,11 +413,82 @@ pcall(function()
         end)
     end
 
-    -- Layout Tabs
+    -- ( Layout Pages )
     local ghostPage  = createTab("Ghost")
     local visionPage = createTab("Vision")
     local miscPage   = createTab("Misc")
 
+    -- ( Exact Stamina Hierarchy Inside Ghost Page )[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span)
+    local infStaminaActive = true
+
+    local StaminaBtnContainer = Instance.new("Frame")
+    StaminaBtnContainer.Name = "Frame"
+    StaminaBtnContainer.Size = UDim2.new(1, 0, 0, 48)
+    StaminaBtnContainer.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+    StaminaBtnContainer.BorderSizePixel = 0
+    StaminaBtnContainer.Parent = ghostPage
+
+    local SBtnCorner = Instance.new("UICorner")
+    SBtnCorner.CornerRadius = UDim.new(0, 8)
+    SBtnCorner.Parent = StaminaBtnContainer
+
+    local SBtnStroke = Instance.new("UIStroke")
+    SBtnStroke.Color = Color3.fromRGB(34, 37, 51)
+    SBtnStroke.Thickness = 1
+    SBtnStroke.Parent = StaminaBtnContainer
+
+    local InfiniteStaminaButton = Instance.new("TextButton")
+    InfiniteStaminaButton.Name = "InfiniteStaminaButton[span_4](start_span)[span_5](start_span)"[span_4](end_span)[span_5](end_span)
+    InfiniteStaminaButton.Size = UDim2.new(1, 0, 1, 0)
+    InfiniteStaminaButton.BackgroundTransparency = 1
+    InfiniteStaminaButton.Text = "Infinite Stamina: ON"
+    InfiniteStaminaButton.TextColor3 = Color3.fromRGB(74, 222, 128)
+    InfiniteStaminaButton.TextSize = 12
+    InfiniteStaminaButton.Font = Enum.Font.GothamBold
+    InfiniteStaminaButton.Parent = StaminaBtnContainer
+
+    InfiniteStaminaButton.MouseButton1Click:Connect(function()
+        infStaminaActive = not infStaminaActive
+        if infStaminaActive then
+            InfiniteStaminaButton.Text = "Infinite Stamina: ON"
+            InfiniteStaminaButton.TextColor3 = Color3.fromRGB(74, 222, 128)
+        else
+            InfiniteStaminaButton.Text = "Infinite Stamina: OFF"
+            InfiniteStaminaButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+        end
+    end)
+
+    local StaminaConfigContainer = Instance.new("Frame")
+    StaminaConfigContainer.Name = "Frame"
+    StaminaConfigContainer.Size = UDim2.new(1, 0, 0, 48)
+    StaminaConfigContainer.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+    StaminaConfigContainer.BorderSizePixel = 0
+    StaminaConfigContainer.Parent = ghostPage
+
+    local SCfgCorner = Instance.new("UICorner")
+    SCfgCorner.CornerRadius = UDim.new(0, 8)
+    SCfgCorner.Parent = StaminaConfigContainer
+
+    local SCfgStroke = Instance.new("UIStroke")
+    SCfgStroke.Color = Color3.fromRGB(34, 37, 51)
+    SCfgStroke.Thickness = 1
+    SCfgStroke.Parent = StaminaConfigContainer
+
+    local InfiniteStaminaConfigButton = Instance.new("TextButton")
+    InfiniteStaminaConfigButton.Name = "InfiniteStaminaConfigButton[span_6](start_span)[span_7](start_span)"[span_6](end_span)[span_7](end_span)
+    InfiniteStaminaConfigButton.Size = UDim2.new(1, 0, 1, 0)
+    InfiniteStaminaConfigButton.BackgroundTransparency = 1
+    InfiniteStaminaConfigButton.Text = "Infinite Stamina Config"
+    InfiniteStaminaConfigButton.TextColor3 = Color3.fromRGB(144, 148, 168)
+    InfiniteStaminaConfigButton.TextSize = 11.5
+    InfiniteStaminaConfigButton.Font = Enum.Font.GothamMedium
+    InfiniteStaminaConfigButton.Parent = StaminaConfigContainer
+
+    InfiniteStaminaConfigButton.MouseButton1Click:Connect(function()
+        notify("Stamina Config", "Native Energy 100% Lock active", 3)
+    end)
+
+    -- ( Info Display Cards )
     local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity", "GhostType: - [0/3]", Color3.fromRGB(255, 90, 90))
     local EvidenceListCard  = createInfoCard(ghostPage, "Discovered Evidence", "Evidence: [None]", Color3.fromRGB(120, 166, 255))
     local CurrentRoomValue  = createInfoCard(ghostPage, "Current Ghost Room", "CurrentRoom: Scanning...", Color3.fromRGB(250, 204, 21))
@@ -442,8 +497,7 @@ pcall(function()
 
     local FreezingCard      = createInfoCard(visionPage, "Favorite Room Temperature", "Freezing=(Measuring...)", Color3.fromRGB(100, 220, 255))
 
-    local ThrowCounterCard = createInfoCard(miscPage, "Item Throw Counter", "Throws detected: 0", Color3.fromRGB(255, 170, 50))
-    local EnergyCard       = createInfoCard(miscPage, "Player Energy", "100.0% [Fresh]", Color3.fromRGB(74, 222, 128))
+    local ThrowCounterCard = createInfoCard(miscPage, "Item Throw Counter", "Throws detected: 0", Color3.fromRGB(255, 170, 50))[span_8](start_span)[span_8](end_span)
     local SpeedValue       = createInfoCard(miscPage, "Ghost Live Velocity", "Speed=(0.00) [Stationary]", Color3.fromRGB(250, 204, 21))
     local ModelValue       = createInfoCard(miscPage, "Visual Skin", "Model: Scanning...", Color3.fromRGB(255, 180, 100))
     local AgeValue         = createInfoCard(miscPage, "Ghost Age", "Ghost Age: Scanning...", Color3.fromRGB(192, 132, 252))
@@ -455,7 +509,6 @@ pcall(function()
     local starterEspActive = false
     local orbEspActive = false
     local favRoomEspActive = false
-    local infStaminaActive = true
     local huntNotifActive = false
     local roomNotifActive = false
     local fullBrightActive = false
@@ -518,10 +571,6 @@ pcall(function()
         autoEscape = on
     end)
 
-    addToggleItem(ghostPage, "Infinite Stamina", "Locks player sprint energy to 100% permanently", true, function(on)
-        infStaminaActive = on
-    end)
-
     addToggleItem(visionPage, "Fullbright", "Brightens dark areas cleanly", false, function(on)
         toggleFullBright(on)
     end)
@@ -546,7 +595,7 @@ pcall(function()
         starterEspActive = on
     end)
 
-    -- Smart Lightswitch Controller
+    -- ( Smart Lightswitch Controller )
     local allLightsState = false
 
     local function isSwitchCurrentlyOn(model)
@@ -642,7 +691,7 @@ pcall(function()
         roomNotifActive = on
     end)
 
-    -- EVIDENCE MATRIX
+    -- ( Evidence Matrix )
     local GHOST_EVIDENCE_MAP = {
         ["Aswang"] = {"EMFLevel5", "Inscription", "Wither"},
         ["Banshee"] = {"FreezingTemperatures", "GhostOrb", "Prints"},
@@ -754,7 +803,7 @@ pcall(function()
         return false
     end
 
-    -- Direct Real-Time Event Spy (Prints & Orbs)
+    -- ( Direct Real-Time Event Spy )
     task.spawn(function()
         pcall(function()
             local function hookPrintsFolder(folder)
@@ -798,52 +847,44 @@ pcall(function()
         end)
     end)
 
-    -- Exact Infinite Stamina Engine (FE Energy + Speed Lock)
+    -- ( Proper Natural Infinite Stamina Engine - No Auto-Run Bug )[span_9](start_span)[span_9](end_span)
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
                 if infStaminaActive then
                     local char = LocalPlayer.Character
-                    local hum = char and char:FindFirstChildOfClass("Humanoid")
                     
+                    -- Native Energy Override[span_10](start_span)[span_10](end_span)
                     if char then
-                        char:SetAttribute("Energy", 100)
+                        char:SetAttribute("Energy", 100)[span_11](start_span)[span_11](end_span)
                         if char:GetAttribute("Stamina") then char:SetAttribute("Stamina", 100) end
                         if char:GetAttribute("Fatigue") then char:SetAttribute("Fatigue", 0) end
                         if char:GetAttribute("Exhaustion") then char:SetAttribute("Exhaustion", 0) end
                     end
 
                     if LocalPlayer:GetAttribute("Energy") then
-                        LocalPlayer:SetAttribute("Energy", 100)
+                        LocalPlayer:SetAttribute("Energy", 100)[span_12](start_span)[span_12](end_span)
                     end
 
-                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
-                    if pGui then
-                        local hud = pGui:FindFirstChild("HUD")
-                        local stamBar = hud and hud:FindFirstChild("Stamina", true)
-                        if stamBar and (stamBar:IsA("Frame") or stamBar:IsA("GuiObject")) then
-                            stamBar.Size = UDim2.new(1, 0, stamBar.Size.Y.Scale, stamBar.Size.Y.Offset)
-                        end
-
-                        for _, lbl in pairs(pGui:GetDescendants()) do
-                            if lbl:IsA("TextLabel") and (lbl.Name == "EnergyDisplay" or string.find(string.lower(lbl.Text), "energy")) then
-                                lbl.Text = "100%"
-                            end
-                        end
+                    -- GUI Energy & Bar Lock[span_13](start_span)[span_13](end_span)
+                    local hud = pGui:FindFirstChild("HUD")[span_14](start_span)[span_14](end_span)
+                    local stamBar = hud and hud:FindFirstChild("Stamina", true)[span_15](start_span)[span_15](end_span)
+                    if stamBar and (stamBar:IsA("Frame") or stamBar:IsA("GuiObject")) then
+                        stamBar.Size = UDim2.new(1, 0, stamBar.Size.Y.Scale, stamBar.Size.Y.Offset)
                     end
 
-                    if hum and hum.MoveDirection.Magnitude > 0 then
-                        if hum.WalkSpeed < 18 and hum.WalkSpeed > 0 then
-                            hum.WalkSpeed = 22
+                    for _, lbl in pairs(pGui:GetDescendants()) do
+                        if lbl:IsA("TextLabel") and (lbl.Name == "EnergyDisplay" or string.find(string.lower(lbl.Text), "energy")) then
+                            lbl.Text = "100%"
                         end
                     end
                 end
             end)
-            task.wait(0.1)
+            task.wait(0.12)
         end
     end)
 
-    -- Ghost ESP & Visual Tracking
+    -- ( Ghost ESP & Visual Tracking )
     local ghostHighlight = Instance.new("Highlight")
     ghostHighlight.Name = "LiveGhostHighlight"
     ghostHighlight.FillColor = Color3.fromRGB(255, 45, 45)
@@ -933,7 +974,7 @@ pcall(function()
         end)
     end)
 
-    -- Dynamic Live Ghost Skin Scanner
+    -- ( Dynamic Live Ghost Skin Scanner )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1005,13 +1046,13 @@ pcall(function()
         end
     end)
 
-    -- Floating Throw Counter Widget
+    -- ( Floating Throw Counter Widget )
     local function createSimplewareThrowCounter()
         local TC_Gui = Instance.new("ScreenGui")
         TC_Gui.Name = "SimplewareThrowCounter"
         TC_Gui.ResetOnSpawn = false
         TC_Gui.DisplayOrder = 9999
-        TC_Gui.Parent = GuiParent
+        TC_Gui.Parent = pGui
 
         local CounterFrame = Instance.new("Frame")
         CounterFrame.Name = "CounterFrame"
@@ -1059,7 +1100,7 @@ pcall(function()
 
     local liveFloatingThrowLabel = createSimplewareThrowCounter()
 
-    -- Advanced Aggression & Throw Monitor
+    -- ( Aggression & Throw Monitor )
     task.spawn(function()
         local itemPosCache = {}
 
@@ -1133,7 +1174,7 @@ pcall(function()
         end
     end)
 
-    -- Room State Tracker
+    -- ( Room State Tracker )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1194,7 +1235,7 @@ pcall(function()
         end
     end)
 
-    -- Favorite Room Live Thermometer Sensor
+    -- ( Favorite Room Live Thermometer Sensor )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1271,7 +1312,7 @@ pcall(function()
         end
     end)
 
-    -- Ultra-Fast Instant Evidence Loop (Spirit Box + EMF)
+    -- ( Spirit Box & EMF Reader Loop )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1292,7 +1333,6 @@ pcall(function()
                     if inZone then
                         local category = getToolCategory(itemModel)
 
-                        -- EMF 5
                         if not activeEvidences["EMFLevel5"] and (category == "EMF Reader" or string.find(string.lower(itemModel.Name), "volt") or string.find(string.lower(itemModel.Name), "emf")) then
                             local isEmf5 = false
 
@@ -1331,7 +1371,6 @@ pcall(function()
                             end
                         end
 
-                        -- Spirit Box
                         if not activeEvidences["SpiritBox"] and (category == "Spirit Box" or string.find(string.lower(itemModel.Name), "spiritbox")) then
                             local isBoxActive = false
 
@@ -1373,7 +1412,7 @@ pcall(function()
         end
     end)
 
-    -- Fast Laser Projector Loop
+    -- ( Laser Projector Loop )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1426,7 +1465,7 @@ pcall(function()
         end
     end)
 
-    -- Adaptive Permanent Evidence Loop (Flower Pot + Spirit Book)
+    -- ( Flower Pot & Spirit Book Loop )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             local checkInterval = 0.6
@@ -1450,7 +1489,6 @@ pcall(function()
                     if itemPos and isInsideHouse(itemPos) then
                         local category = getToolCategory(itemModel)
 
-                        -- Flower Pot Wither Check
                         if not activeEvidences["Wither"] and (category == "Flower Pot" or string.find(string.lower(itemModel.Name), "flower")) then
                             local isWithered = itemModel:GetAttribute("Withered") == true or itemModel:FindFirstChild("Withered")
                             if not isWithered then
@@ -1475,7 +1513,6 @@ pcall(function()
                             end
                         end
 
-             -- Spirit Book Inscription Check
                         if not activeEvidences["Inscription"] and (category == "Spirit Book" or string.find(string.lower(itemModel.Name), "book")) then
                             local hasRealWriting = false
                             local lp = itemModel:FindFirstChild("LeftPage", true)
@@ -1508,7 +1545,7 @@ pcall(function()
         end
     end)
 
-    -- Smart Environmental Loop (Freezing Fog, Orbs & Multi-Container Prints Check)
+    -- ( Environmental Freezing, Orbs & Prints )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             local envWait = 1.0
@@ -1524,7 +1561,6 @@ pcall(function()
                     end
                 end
 
-                -- Freezing Fog
                 if not activeEvidences["FreezingTemperatures"] then
                     local allowCheck = isSnowMap or (elapsed > 45)
                     if allowCheck then
@@ -1550,7 +1586,6 @@ pcall(function()
                     end
                 end
 
-                -- Ghost Orb Direct Root + Map Scan
                 if not activeEvidences["GhostOrb"] then
                     local orbFound = false
 
@@ -1589,7 +1624,6 @@ pcall(function()
                     end
                 end
 
-                -- Prints Check
                 if not activeEvidences["Prints"] then
                     local foundPrint = false
                     local hpFolder = Workspace:FindFirstChild("Handprints", true)
@@ -1628,7 +1662,7 @@ pcall(function()
         end
     end)
 
-    -- Evidence Matching & Doppelganger Resolution
+    -- ( Evidence Matching & Doppelganger Resolution )
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1658,7 +1692,6 @@ pcall(function()
                     end
                 end
 
-                -- Doppelganger 4th fake orb check
                 if count >= 4 then
                     if activeEvidences["GhostOrb"] and activeEvidences["FreezingTemperatures"] and activeEvidences["Inscription"] and activeEvidences["SpiritBox"] then
                         isHardLocked = true
@@ -1692,7 +1725,7 @@ pcall(function()
         end
     end)
 
-    -- Visual Highlights & Favorite Room Minimal Text ESP (Fixed Label Bug)
+    -- ( Visual ESPs & Strict Favorite Room Text )[span_16](start_span)[span_16](end_span)
     local favRoomBillboard = nil
     local favRoomTextLabel = nil
 
@@ -1701,7 +1734,6 @@ pcall(function()
             pcall(function()
                 local allTools = getAllToolModels()
 
-                -- Tools ESP
                 if starterEspActive then
                     for _, itemModel in pairs(allTools) do
                         local actualName = getToolCategory(itemModel) or "Tool"
@@ -1745,7 +1777,6 @@ pcall(function()
                     end
                 end
 
-                -- Prints ESP
                 if printsEspActive then
                     local function applyPrintVisual(printPart)
                         if not printPart:FindFirstChild("PrintESP") then
@@ -1804,7 +1835,6 @@ pcall(function()
                     for _, obj in pairs(Workspace:GetChildren()) do cleanPrintVisual(obj) end
                 end
 
-                -- Ghost Orb ESP
                 if orbEspActive then
                     local function applyOrbEsp(obj)
                         if not obj:FindFirstChild("OrbESP") then
@@ -1861,7 +1891,7 @@ pcall(function()
                     end
                 end
 
-                -- Strict Center-Match Favorite Room ESP
+                -- Strict Favorite Room ESP[span_17](start_span)[span_17](end_span)
                 local ghost = getLiveGhost()
                 local favRoomName = ghost and (ghost:GetAttribute("FavoriteRoom") or ghost:GetAttribute("FavRoom"))
 
@@ -1917,14 +1947,14 @@ pcall(function()
                             favRoomTextLabel.TextColor3 = Color3.fromRGB(192, 132, 252)
                             favRoomTextLabel.TextStrokeTransparency = 0.4
                             favRoomTextLabel.TextStrokeColor3 = Color3.fromRGB(20, 10, 30)
-                            favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName)
+                            favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName)[span_18](start_span)[span_18](end_span)
                             favRoomTextLabel.Parent = favRoomBillboard
                         end
 
                         favRoomBillboard.Enabled = true
                         favRoomBillboard.Adornee = targetRoomPart
                         if favRoomTextLabel then
-                            favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName)
+                            favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName)[span_19](start_span)[span_19](end_span)
                         end
                     end
                 else
