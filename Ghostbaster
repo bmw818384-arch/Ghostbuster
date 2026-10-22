@@ -42,7 +42,7 @@ pcall(function()
 
     pcall(function()
         if pGui:FindFirstChild("Ghostbuster") then pGui.Ghostbuster:Destroy() end
-        if pGui:FindFirstChild("SimplewareThrowCounter") then pGui.SimplewareThrowCounter:Destroy() end
+        if pGui:FindFirstChild("GhostBusterThrowCounter") then pGui.GhostBusterThrowCounter:Destroy() end
     end)
 
     -- Draggable Helper
@@ -430,7 +430,7 @@ pcall(function()
     local visionPage = createTab("Vision")
     local miscPage   = createTab("Misc")
 
-    -- Stamina Hierarchy Inside Ghost Page
+    -- Ghostbuster Stamina Hierarchy
     local infStaminaActive = true
 
     local StaminaBtnContainer = Instance.new("Frame")
@@ -500,7 +500,7 @@ pcall(function()
         notify("Stamina Config", "Native Energy 100% Lock active", 3)
     end)
 
-     -- Info Display Cards
+    -- Info Display Cards
     local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity", "GhostType: - [0/3]", Color3.fromRGB(255, 90, 90))
     local EvidenceListCard  = createInfoCard(ghostPage, "Discovered Evidence", "Evidence: [None]", Color3.fromRGB(120, 166, 255))
     local CurrentRoomValue  = createInfoCard(ghostPage, "Current Ghost Room", "CurrentRoom: Scanning...", Color3.fromRGB(250, 204, 21))
@@ -1056,7 +1056,7 @@ pcall(function()
     end)
 
     -- Floating Throw Counter Widget
-    local function createSimplewareThrowCounter()
+    local function createGhostBusterThrowCounter()
         local TC_Gui = Instance.new("ScreenGui")
         TC_Gui.Name = "GhostBusterThrowCounter"
         TC_Gui.ResetOnSpawn = false
@@ -1107,7 +1107,7 @@ pcall(function()
         return CountLabel
     end
 
-    local liveFloatingThrowLabel = createSimplewareThrowCounter()
+    local liveFloatingThrowLabel = createGhostBusterThrowCounter()
 
     -- Aggression & Throw Monitor
     task.spawn(function()
