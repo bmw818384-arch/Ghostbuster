@@ -436,10 +436,33 @@ pcall(function()
     local visionPage = createTab("Vision")
     local miscPage   = createTab("Misc")
 
-    -- Clean Infinite Stamina Slider (Dex Search Compatible)
+    -- Fixed In-Place Lock Stamina Engine
     local infStaminaActive = true
-    addToggleItem(ghostPage, "Infinite Stamina", "Locks player sprint energy permanently", true, function(on)
+    local lockedEnergyVal = nil
+    local lockedBarScaleX = nil
+
+    addToggleItem(ghostPage, "Infinite Stamina", "Locks player stamina in place without increasing", true, function(on)
         infStaminaActive = on
+        if not on then
+            lockedEnergyVal = nil
+            lockedBarScaleX = nil
+        else
+            local char = LocalPlayer.Character
+            if char and char:GetAttribute("Energy") then
+                lockedEnergyVal = char:GetAttribute("Energy")
+            else
+                lockedEnergyVal = 100
+            end
+
+            local hud = pGui:FindFirstChild("HUD")
+            if hud then
+                local staminaFrame = hud:FindFirstChild("Stamina", true)
+                local bar = staminaFrame and (staminaFrame:FindFirstChild("Bar") or staminaFrame)
+                if bar and (bar:IsA("Frame") or bar:IsA("GuiObject")) then
+                    lockedBarScaleX = bar.Size.X.Scale
+                end
+            end
+        end
     end, "InfiniteStaminaButton")
 
     -- Info Display Cards
@@ -762,7 +785,7 @@ pcall(function()
         for _, snd in pairs(ghost:GetDescendants()) do
             if snd:IsA("Sound") and snd.IsPlaying then
                 local sName = string.lower(snd.Name)
-                if string.find(sName, "scream") or string.find(sName, "hunt") or string.find(sName, "roar") or string.find(sName, "kill") then
+                if string.find(sName, "scream") or string.find(sName, "hunt") or string.find(sName, "roar") or string.find(sName, "kill") or string.find(sName, "wail") then
                     return true
                 end
             end
@@ -814,7 +837,7 @@ pcall(function()
         end)
     end)
 
-    -- Dump-Verified Native Stamina Hook (Stamina.Bar Lock)
+    -- Fixed In-Place Lock Stamina Engine Loop
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -822,35 +845,172 @@ pcall(function()
                     local char = LocalPlayer.Character
                     
                     if char then
-                        char:SetAttribute("Energy", 100)
-                        if char:GetAttribute("Stamina") then char:SetAttribute("Stamina", 100) end
+                        local curEnergy = char:GetAttribute("Energy")
+                        if not lockedEnergyVal then
+                            lockedEnergyVal = curEnergy or 100
+                        end
+                        char:SetAttribute("Energy", lockedEnergyVal)
+                        if char:GetAttribute("Stamina") then char:SetAttribute("Stamina", lockedEnergyVal) end
                         if char:GetAttribute("Fatigue") then char:SetAttribute("Fatigue", 0) end
                         if char:GetAttribute("Exhaustion") then char:SetAttribute("Exhaustion", 0) end
                     end
 
                     if LocalPlayer:GetAttribute("Energy") then
-                        LocalPlayer:SetAttribute("Energy", 100)
+                        if not lockedEnergyVal then lockedEnergyVal = 100 end
+                        LocalPlayer:SetAttribute("Energy", lockedEnergyVal)
                     end
 
                     local hud = pGui:FindFirstChild("HUD")
                     if hud then
                         local staminaFrame = hud:FindFirstChild("Stamina", true)
-                        if staminaFrame then
-                            local bar = staminaFrame:FindFirstChild("Bar") or staminaFrame
-                            if bar and (bar:IsA("Frame") or bar:IsA("GuiObject")) then
-                                bar.Size = UDim2.new(1, 0, bar.Size.Y.Scale, bar.Size.Y.Offset)
+                        local bar = staminaFrame and (staminaFrame:FindFirstChild("Bar") or staminaFrame)
+                        if bar and (bar:IsA("Frame") or bar:IsA("GuiObject")) then
+                            if not lockedBarScaleX then
+                                lockedBarScaleX = bar.Size.X.Scale
                             end
-                        end
-                    end
-
-                    for _, lbl in pairs(pGui:GetDescendants()) do
-                        if lbl:IsA("TextLabel") and (lbl.Name == "EnergyDisplay" or string.find(string.lower(lbl.Text), "energy")) then
-                            lbl.Text = "100%"
+                            bar.Size = UDim2.new(lockedBarScaleX, 0, bar.Size.Y.Scale, bar.Size.Y.Offset)
                         end
                     end
                 end
             end)
             task.wait(0.12)
+        end
+    end)
+
+    -- 5 Special Ghost Detections Engine
+    task.spawn(function()
+        local lastGhostPos = nil
+        local crossYPositions = {}
+        local initialTeammateCount = #Players:GetPlayers()
+        local previousGhostSpeed = nil
+
+        while ScreenGui and ScreenGui.Parent do
+            pcall(function()
+                if isHardLocked then return end
+                local ghost = getLiveGhost()
+                local hrp = ghost and ghost:FindFirstChild("HumanoidRootPart")
+                local gPos = hrp and hrp.Position
+
+                -- 1. Demon: Crucifix Levitation & Burn
+                local itemsFolder = Workspace:FindFirstChild("Items")
+                if itemsFolder and not isHardLocked then
+                    for _, itm in pairs(itemsFolder:GetChildren()) do
+                        local nameL = string.lower(itm.Name)
+                        if string.find(nameL, "cross") or string.find(nameL, "crucifix") then
+                            local part = itm:FindFirstChild("Handle") or itm:FindFirstChildWhichIsA("BasePart")
+                            if part and isInsideHouse(part.Position) then
+                                local initY = crossYPositions[itm]
+                                if not initY then
+                                    crossYPositions[itm] = part.Position.Y
+                                else
+                                    local diffY = part.Position.Y - initY
+                                    local burning = itm:FindFirstChildWhichIsA("ParticleEmitter", true) or itm:FindFirstChildWhichIsA("Fire", true) or itm:GetAttribute("Burnt") == true
+                                    if diffY > 1.2 and (burning or part.AssemblyLinearVelocity.Y > 0.8) then
+                                        predictedGhost = "Demon"
+                                        predictedReason = "Crucifix Levitation & Burn"
+                                        isHardLocked = true
+                                        notify("Signature Verified", "Demon: Crucifix Levitated in air & Burnt!", 5)
+                                        return
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- Position based checks (Entity, Vex)
+                if gPos then
+                    if lastGhostPos then
+                        local moveDist = (gPos - lastGhostPos).Magnitude
+
+                        -- 2. Entity: Instant Frame Teleportation (>35 studs jump)
+                        if moveDist > 35 and not isHunting then
+                            predictedGhost = "Entity"
+                            predictedReason = "Instant Frame Teleportation"
+                            isHardLocked = true
+                            notify("Signature Verified", "Entity: Instant Teleportation Detected (" .. tostring(math.floor(moveDist)) .. " studs)!", 5)
+                            return
+                        end
+
+                        -- 3. Vex: Wall Phase / No-Clip Detection
+                        if moveDist > 4 and moveDist < 30 then
+                            local rayParams = RaycastParams.new()
+                            rayParams.FilterType = RaycastFilterType.Exclude
+                            rayParams.FilterDescendantsInstances = {ghost, LocalPlayer.Character}
+                            local rayDir = (gPos - lastGhostPos)
+                            local rayResult = Workspace:Raycast(lastGhostPos, rayDir, rayParams)
+                            if rayResult and rayResult.Instance then
+                                local hitName = string.lower(rayResult.Instance.Name)
+                                if (string.find(hitName, "wall") or string.find(hitName, "door") or rayResult.Instance.CanCollide) and not string.find(hitName, "floor") then
+                                    predictedGhost = "Vex"
+                                    predictedReason = "Phased Through Solid Wall (No-Clip)"
+                                    isHardLocked = true
+                                    notify("Signature Verified", "Vex: No-Clip Phased Through Wall!", 5)
+                                    return
+                                end
+                            end
+                        end
+                    end
+                    lastGhostPos = gPos
+                end
+
+                -- 4. Banshee: Ghost Wail during hunt (Instead of Ghost Scream)
+                if ghost and isHunting and not isHardLocked then
+                    for _, snd in pairs(ghost:GetDescendants()) do
+                        if snd:IsA("Sound") and snd.IsPlaying then
+                            local sName = string.lower(snd.Name)
+                            if string.find(sName, "wail") or string.find(sName, "cry") or string.find(sName, "banshee") then
+                                predictedGhost = "Banshee"
+                                predictedReason = "Ghost Wail Hunt Audio (No Standard Scream)"
+                                isHardLocked = true
+                                notify("Signature Verified", "Banshee: Ghost Wail Audio Detected!", 5)
+                                return
+                            end
+                        end
+                    end
+                end
+
+                -- 5. Aswang: Salt Slowdown & Kill Speed Ramp
+                if ghost and hrp and not isHardLocked then
+                    local currentGhostSpeed = hrp.AssemblyLinearVelocity.Magnitude
+
+                    -- Check Salt interaction
+                    if itemsFolder then
+                        for _, itm in pairs(itemsFolder:GetChildren()) do
+                            local nameL = string.lower(itm.Name)
+                            if string.find(nameL, "salt") then
+                                local sPart = itm:FindFirstChildWhichIsA("BasePart")
+                                if sPart and (sPart.Position - hrp.Position).Magnitude < 4.5 then
+                                    if previousGhostSpeed and previousGhostSpeed > 6.0 and currentGhostSpeed < (previousGhostSpeed * 0.65) then
+                                        predictedGhost = "Aswang"
+                                        predictedReason = "Walked through Salt & Slowed Down"
+                                        isHardLocked = true
+                                        notify("Signature Verified", "Aswang: Drastic Salt Slowdown Detected!", 5)
+                                        return
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    -- Check Kill Speed Spike
+                    local currentTeammateCount = #Players:GetPlayers()
+                    local ragdolls = Workspace:FindFirstChild("Ragdolls")
+                    local deathCount = ragdolls and #ragdolls:GetChildren() or (initialTeammateCount - currentTeammateCount)
+                    if deathCount > 0 and isHunting then
+                        if currentGhostSpeed >= 23.5 then
+                            predictedGhost = "Aswang"
+                            predictedReason = "Post-Kill Speed Ramped (+20% per kill)"
+                            isHardLocked = true
+                            notify("Signature Verified", "Aswang: Lethal Post-Kill Speed Boost!", 5)
+                            return
+                        end
+                    end
+
+                    previousGhostSpeed = currentGhostSpeed
+                end
+            end)
+            task.wait(0.2)
         end
     end)
 
@@ -1126,18 +1286,8 @@ pcall(function()
                     end
                 end
 
-                if isHunting and not isHardLocked and predictedGhost ~= "Demon" then
-                    local char = LocalPlayer.Character
-                    local energy = char and char:GetAttribute("Energy")
-                    if energy and energy >= 70 then
-                        predictedGhost = "Demon"
-                        predictedReason = "Early Hunt (>70% Energy)"
-                        notify("Behavior Signature", "Early hunt started. Predicted: Demon", 4)
-                    end
-                end
-
                 if not isHardLocked and predictedGhost then
-                    GhostTypeCard.Text = predictedGhost .. " [" .. predictedReason .. "] (80%)"
+                    GhostTypeCard.Text = predictedGhost .. " [" .. predictedReason .. "]"
                     GhostTypeCard.TextColor3 = Color3.fromRGB(255, 175, 60)
                 end
             end)
@@ -1687,6 +1837,9 @@ pcall(function()
                 elseif #matchingGhosts > 1 then
                     GhostTypeCard.Text = "Tie: " .. table.concat(matchingGhosts, " or ")
                     GhostTypeCard.TextColor3 = Color3.fromRGB(250, 204, 21)
+                elseif isHardLocked and predictedGhost then
+                    GhostTypeCard.Text = predictedGhost .. " (100% SIGNATURE LOCK)"
+                    GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
                 elseif not predictedGhost then
                     GhostTypeCard.Text = "GhostType: - [" .. tostring(count) .. "/3]"
                     GhostTypeCard.TextColor3 = Color3.fromRGB(255, 90, 90)
@@ -1938,4 +2091,3 @@ pcall(function()
 
     notify("Ghostbuster Initialized", "All layers operational", 4)
 end)
-                    
