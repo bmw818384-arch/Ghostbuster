@@ -5,6 +5,7 @@ pcall(function()
     local TweenService = game:GetService("TweenService")
     local StarterGui = game:GetService("StarterGui")
     local Lighting = game:GetService("Lighting")
+    local SoundService = game:GetService("SoundService")
 
     local LocalPlayer = Players.LocalPlayer
     if not LocalPlayer then
@@ -570,29 +571,210 @@ pcall(function()
         starterEspActive = on
     end)
 
+    -- Floating Throw Counter Widget
+    local function createGhostBusterThrowCounter()
+        local TC_Gui = Instance.new("ScreenGui")
+        TC_Gui.Name = "GhostBusterThrowCounter"
+        TC_Gui.ResetOnSpawn = false
+        TC_Gui.DisplayOrder = 999999
+        TC_Gui.IgnoreGuiInset = true
+        TC_Gui.Parent = pGui
+
+        local CounterFrame = Instance.new("Frame")
+        CounterFrame.Name = "CounterFrame"
+        CounterFrame.Size = UDim2.new(0, 160, 0, 52)
+        CounterFrame.Position = UDim2.new(0.5, -80, 0.05, 0)
+        CounterFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        CounterFrame.BorderSizePixel = 0
+        CounterFrame.Active = true
+        CounterFrame.Parent = TC_Gui
+
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 10)
+        Corner.Parent = CounterFrame
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color3.fromRGB(45, 50, 70)
+        Stroke.Thickness = 1.2
+        Stroke.Parent = CounterFrame
+
+        local DragTitle = Instance.new("TextLabel")
+        DragTitle.Name = "DragTitle"
+        DragTitle.Size = UDim2.new(1, 0, 0, 20)
+        DragTitle.Position = UDim2.new(0, 0, 0, 4)
+        DragTitle.BackgroundTransparency = 1
+        DragTitle.Text = "THROW COUNTER"
+        DragTitle.TextColor3 = Color3.fromRGB(220, 225, 240)
+        DragTitle.TextSize = 11
+        DragTitle.Font = Enum.Font.GothamBold
+        DragTitle.Parent = CounterFrame
+
+        local CountLabel = Instance.new("TextLabel")
+        CountLabel.Name = "Count"
+        CountLabel.Size = UDim2.new(1, 0, 0, 22)
+        CountLabel.Position = UDim2.new(0, 0, 0, 24)
+        CountLabel.BackgroundTransparency = 1
+        CountLabel.Text = "Throws detected: 0"
+        CountLabel.TextColor3 = Color3.fromRGB(255, 75, 75)
+        CountLabel.TextSize = 12
+        CountLabel.Font = Enum.Font.GothamBold
+        CountLabel.Parent = CounterFrame
+
+        makeDraggable(CounterFrame, CounterFrame)
+        return CountLabel
+    end
+
+    local liveFloatingThrowLabel = createGhostBusterThrowCounter()
+
+    -- 1. Fast Global Acoustic Spy (Distance-Independent Sound Listener)
+    local function hookSoundListener(snd)
+        if not snd:IsA("Sound") then return end
+        snd.Played:Connect(function()
+            pcall(function()
+                local sId = tostring(snd.SoundId)
+                local sName = string.lower(snd.Name)
+
+                -- Cross Burn Sounds (Burst or Crackle)
+                if sName == "crackle" or sName == "burst" or sId == "rbxassetid://239443642" or sId == "rbxassetid://7278163473" then
+                    if dynamicGhostGuess ~= "Demon" then
+                        dynamicGhostGuess = "Demon"
+                        dynamicReason = "Acoustic Cross Burn Trigger"
+                        notify("Global Audio Spy", "Demon: Cross Burn Audio Fired!", 5)
+                    end
+                end
+
+                -- Banshee Wail Listener
+                if string.find(sName, "wail") or string.find(sName, "cry") or sId == "rbxassetid://128820661683581" then
+                    if not string.find(sName, "scream") and not string.find(sName, "roar") then
+                        if dynamicGhostGuess ~= "Banshee" then
+                            dynamicGhostGuess = "Banshee"
+                            dynamicReason = "Acoustic Ghost Wail Trigger"
+                            notify("Global Audio Spy", "Banshee: Ghost Wail Audio Verified!", 5)
+                        end
+                    end
+                end
+            end)
+        end)
+    end
+
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Sound") then hookSoundListener(obj) end
+    end
+    Workspace.DescendantAdded:Connect(function(obj)
+        if obj:IsA("Sound") then hookSoundListener(obj) end
+    end)
+
+    -- 2. Massive Fast Throw Counter (Simpleware-Style Prop Listener)
+    local monitoredProps = {}
+    local function hookPropListener(prop)
+        if not prop:IsA("BasePart") or monitoredProps[prop] then return end
+        monitoredProps[prop] = true
+
+        local lastCFrame = prop.CFrame
+        prop:GetPropertyChangedSignal("CFrame"):Connect(function()
+            pcall(function()
+                local curCFrame = prop.CFrame
+                local delta = (curCFrame.Position - lastCFrame.Position).Magnitude
+                if delta > 1.8 and prop.AssemblyLinearVelocity.Magnitude > 3.0 and isInsideHouse(curCFrame.Position) then
+                    totalThrowsCount = totalThrowsCount + 1
+                    local throwTxt = "Throws detected: " .. tostring(totalThrowsCount)
+                    ThrowCounterCard.Text = throwTxt
+                    if liveFloatingThrowLabel then
+                        liveFloatingThrowLabel.Text = throwTxt
+                    end
+                end
+                lastCFrame = curCFrame
+            end)
+        end)
+    end
+
+    local itemsFolder = Workspace:FindFirstChild("Items")
+    if itemsFolder then
+        for _, itm in pairs(itemsFolder:GetDescendants()) do
+            if itm:IsA("BasePart") then hookPropListener(itm) end
+        end
+        itemsFolder.DescendantAdded:Connect(function(itm)
+            if itm:IsA("BasePart") then hookPropListener(itm) end
+        end)
+    end
+
+    local interactFolder = Workspace:FindFirstChild("Interactables")
+    if interactFolder then
+        for _, itm in pairs(interactFolder:GetDescendants()) do
+            if itm:IsA("BasePart") then hookPropListener(itm) end
+        end
+        interactFolder.DescendantAdded:Connect(function(itm)
+            if itm:IsA("BasePart") then hookPropListener(itm) end
+        end)
+    end
+
+    -- 3. Ragdolls Death & Corpse Throw Listener
+    local ragdolls = Workspace:FindFirstChild("Ragdolls")
+    if ragdolls then
+        ragdolls.ChildAdded:Connect(function(corpse)
+            task.wait(0.1)
+            pcall(function()
+                for _, part in pairs(corpse:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part:GetPropertyChangedSignal("CFrame"):Connect(function()
+                            if part.AssemblyLinearVelocity.Magnitude > 8.0 then
+                                if dynamicGhostGuess ~= "Dybbuk" then
+                                    dynamicGhostGuess = "Dybbuk"
+                                    dynamicReason = "Corpse Throw"
+                                    notify("Behavior Detected", "Corpse Thrown Detected! Predicted: Dybbuk", 4)
+                                end
+                            end
+                        end)
+                    end
+                end
+            end)
+        end)
+    end
+
+    -- 4. SaltLine Step & Interaction Listener
+    local function hookSaltPilesFolder(saltFolder)
+        if not saltFolder then return end
+        saltFolder.ChildAdded:Connect(function(sLine)
+            task.wait(0.05)
+            pcall(function()
+                local sCenter = sLine:FindFirstChild("Center") or sLine:FindFirstChild("Salt") or sLine:FindFirstChildWhichIsA("BasePart")
+                if sCenter then
+                    sCenter.Touched:Connect(function(hit)
+                        local g = getLiveGhost()
+                        if g and hit:IsDescendantOf(g) then
+                            local hrp = g:FindFirstChild("HumanoidRootPart")
+                            if hrp and hrp.AssemblyLinearVelocity.Magnitude < 10.0 then
+                                if dynamicGhostGuess ~= "Aswang" then
+                                    dynamicGhostGuess = "Aswang"
+                                    dynamicReason = "SaltLine Step Slowdown"
+                                    notify("Behavior Detected", "Aswang: Stepped in SaltLine & Slowed Down!", 5)
+                                end
+                            end
+                        end
+                    end)
+                end
+            end)
+        end)
+    end
+
+    hookSaltPilesFolder(Workspace:FindFirstChild("SaltPiles"))
+    Workspace.ChildAdded:Connect(function(ch)
+        if ch.Name == "SaltPiles" then hookSaltPilesFolder(ch) end
+    end)
+
     -- Smart Lightswitch Controller
     local allLightsState = false
-
     local function isSwitchCurrentlyOn(model)
         local stateAttr = model:GetAttribute("State")
-        if stateAttr ~= nil then
-            return stateAttr == true
-        end
-
+        if stateAttr ~= nil then return stateAttr == true end
         local onPart = model:FindFirstChild("On")
-        if onPart and onPart:IsA("BasePart") then
-            if onPart.Transparency < 0.5 then
-                return true
-            end
-        end
-
+        if onPart and onPart:IsA("BasePart") and onPart.Transparency < 0.5 then return true end
         local prompt = model:FindFirstChildWhichIsA("ProximityPrompt", true)
         if prompt and prompt.ActionText then
             local aText = string.lower(prompt.ActionText)
             if string.find(aText, "off") then return true end
             if string.find(aText, "on") then return false end
         end
-
         return false
     end
 
@@ -747,12 +929,9 @@ pcall(function()
 
     local function getAllToolModels()
         local list = {}
-
-        local itemsFolder = Workspace:FindFirstChild("Items")
-        if itemsFolder then
-            for _, itm in pairs(itemsFolder:GetChildren()) do
-                table.insert(list, itm)
-            end
+        local itmFolder = Workspace:FindFirstChild("Items")
+        if itmFolder then
+            for _, itm in pairs(itmFolder:GetChildren()) do table.insert(list, itm) end
         end
 
         for _, plyr in pairs(Players:GetPlayers()) do
@@ -764,23 +943,17 @@ pcall(function()
                     end
                 end
             end
-
             local pHolder = plyr:FindFirstChild("ToolsHolder")
             if pHolder then
-                for _, itm in pairs(pHolder:GetChildren()) do
-                    table.insert(list, itm)
-                end
+                for _, itm in pairs(pHolder:GetChildren()) do table.insert(list, itm) end
             end
         end
-
         return list
     end
 
     local function checkIsHuntActive(ghost)
         if not ghost then return false end
-        if ghost:GetAttribute("Hunting") == true or ghost:GetAttribute("IsHunting") == true then
-            return true
-        end
+        if ghost:GetAttribute("Hunting") == true or ghost:GetAttribute("IsHunting") == true then return true end
         for _, snd in pairs(ghost:GetDescendants()) do
             if snd:IsA("Sound") and snd.IsPlaying then
                 local sName = string.lower(snd.Name)
@@ -792,47 +965,28 @@ pcall(function()
         return false
     end
 
-    -- Direct Real-Time Event Spy
-    task.spawn(function()
+    -- Direct Handprints & Orbs Event Spy
+    Workspace.DescendantAdded:Connect(function(desc)
         pcall(function()
-            local function hookPrintsFolder(folder)
-                if folder then
-                    folder.ChildAdded:Connect(function(child)
-                        task.wait(0.05)
-                        if child:IsA("BasePart") and isInsideHouse(child.Position) then
-                            if not activeEvidences["Prints"] then
-                                activeEvidences["Prints"] = true
-                                notify("Confirmed Evidence", "Prints Verified (Event Spy)!", 3)
-                            end
-                        end
-                    end)
+            local lName = string.lower(desc.Name)
+            if string.find(lName, "handprint") or string.find(lName, "footprint") then
+                task.wait(0.05)
+                if desc:IsA("BasePart") and isInsideHouse(desc.Position) then
+                    if not activeEvidences["Prints"] then
+                        activeEvidences["Prints"] = true
+                        notify("Confirmed Evidence", "Prints Verified (Event Spy)!", 3)
+                    end
+                end
+            elseif lName == "ghostorb" or lName == "orb" then
+                task.wait(0.05)
+                local pos = desc:IsA("BasePart") and desc.Position or (desc:IsA("Model") and desc:GetPivot().Position)
+                if pos and isInsideHouse(pos) then
+                    if not activeEvidences["GhostOrb"] then
+                        activeEvidences["GhostOrb"] = true
+                        notify("Confirmed Evidence", "Ghost Orb Verified (Event Spy)!", 3)
+                    end
                 end
             end
-
-            local hpFolder = Workspace:FindFirstChild("Handprints", true)
-            hookPrintsFolder(hpFolder)
-
-            Workspace.DescendantAdded:Connect(function(desc)
-                local lName = string.lower(desc.Name)
-                if string.find(lName, "handprint") or string.find(lName, "footprint") then
-                    task.wait(0.05)
-                    if desc:IsA("BasePart") and isInsideHouse(desc.Position) then
-                        if not activeEvidences["Prints"] then
-                            activeEvidences["Prints"] = true
-                            notify("Confirmed Evidence", "Prints Verified (Descendant Spy)!", 3)
-                        end
-                    end
-                elseif lName == "ghostorb" or lName == "orb" then
-                    task.wait(0.05)
-                    local pos = desc:IsA("BasePart") and desc.Position or (desc:IsA("Model") and desc:GetPivot().Position)
-                    if pos and isInsideHouse(pos) then
-                        if not activeEvidences["GhostOrb"] then
-                            activeEvidences["GhostOrb"] = true
-                            notify("Confirmed Evidence", "Ghost Orb Verified (Event Spy)!", 3)
-                        end
-                    end
-                end
-            end)
         end)
     end)
 
@@ -842,12 +996,9 @@ pcall(function()
             pcall(function()
                 if infStaminaActive then
                     local char = LocalPlayer.Character
-                    
                     if char then
                         local curEnergy = char:GetAttribute("Energy")
-                        if not lockedEnergyVal then
-                            lockedEnergyVal = curEnergy or 100
-                        end
+                        if not lockedEnergyVal then lockedEnergyVal = curEnergy or 100 end
                         char:SetAttribute("Energy", lockedEnergyVal)
                         if char:GetAttribute("Stamina") then char:SetAttribute("Stamina", lockedEnergyVal) end
                         if char:GetAttribute("Fatigue") then char:SetAttribute("Fatigue", 0) end
@@ -864,78 +1015,13 @@ pcall(function()
                         local staminaFrame = hud:FindFirstChild("Stamina", true)
                         local bar = staminaFrame and (staminaFrame:FindFirstChild("Bar") or staminaFrame)
                         if bar and (bar:IsA("Frame") or bar:IsA("GuiObject")) then
-                            if not lockedBarScaleX then
-                                lockedBarScaleX = bar.Size.X.Scale
-                            end
+                            if not lockedBarScaleX then lockedBarScaleX = bar.Size.X.Scale end
                             bar.Size = UDim2.new(lockedBarScaleX, 0, bar.Size.Y.Scale, bar.Size.Y.Offset)
                         end
                     end
                 end
             end)
             task.wait(0.12)
-        end
-    end)
-
-    -- Dynamic Ghost Behavior Engine (Demon Crucifix Burn + Direct Burn Spy)
-    task.spawn(function()
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                local ghost = getLiveGhost()
-                local hrp = ghost and ghost:FindFirstChild("HumanoidRootPart")
-
-                -- Demon Crucifix Direct Burn Monitor
-                local itemsFolder = Workspace:FindFirstChild("Items")
-                if itemsFolder then
-                    for _, itm in pairs(itemsFolder:GetChildren()) do
-                        local nameL = string.lower(itm.Name)
-                        local isCross = string.find(nameL, "cross") or string.find(nameL, "crucifix") or itm:FindFirstChild("Tie") or itm:FindFirstChild("Plank Horizontal")
-                        if isCross then
-                            local flamesEmitter = itm:FindFirstChild("Flames", true)
-                            local smokeEmitter = itm:FindFirstChild("Smoke", true)
-                            local isBurning = (flamesEmitter and flamesEmitter.Enabled) or (smokeEmitter and smokeEmitter.Enabled)
-
-                            if not isBurning then
-                                for _, s in pairs(itm:GetDescendants()) do
-                                    if s:IsA("Sound") and s.IsPlaying then
-                                        local sName = string.lower(s.Name)
-                                        if sName == "crackle" or sName == "burst" then
-                                            isBurning = true
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-
-                            if isBurning then
-                                if dynamicGhostGuess ~= "Demon" then
-                                    dynamicGhostGuess = "Demon"
-                                    dynamicReason = "Crucifix Burnt"
-                                    notify("Behavior Detected", "Crucifix Burn Detected! Predicted: Demon", 4)
-                                end
-                                break
-                            end
-                        end
-                    end
-                end
-
-                -- Dynamic Dybbuk Corpse Throw Check
-                local ragdolls = Workspace:FindFirstChild("Ragdolls")
-                if ragdolls then
-                    for _, rModel in pairs(ragdolls:GetChildren()) do
-                        for _, part in pairs(rModel:GetDescendants()) do
-                            if part:IsA("BasePart") and part.AssemblyLinearVelocity.Magnitude > 8.0 then
-                                if dynamicGhostGuess ~= "Dybbuk" then
-                                    dynamicGhostGuess = "Dybbuk"
-                                    dynamicReason = "Corpse Throw"
-                                    notify("Behavior Detected", "Corpse Thrown Detected! Predicted: Dybbuk", 4)
-                                end
-                                break
-                            end
-                        end
-                    end
-                end
-            end)
-            task.wait(0.5)
         end
     end)
 
@@ -984,27 +1070,19 @@ pcall(function()
                     isHunting = true
                     if not wasHunting then
                         wasHunting = true
-                        if huntNotifActive then
-                            notify("HUNT STARTED", "Ghost is hunting! Evacuating to camp.", 4)
-                        end
+                        if huntNotifActive then notify("HUNT STARTED", "Ghost is hunting! Evacuating to camp.", 4) end
                     end
-
                     if autoEscape and myRoot then
                         local safeCF = getBaseCampCFrame()
-                        if safeCF then
-                            local dCamp = (myRoot.Position - safeCF.Position).Magnitude
-                            if dCamp > 20 then
-                                myRoot.CFrame = safeCF
-                            end
+                        if safeCF and (myRoot.Position - safeCF.Position).Magnitude > 20 then
+                            myRoot.CFrame = safeCF
                         end
                     end
                 else
                     isHunting = false
                     if wasHunting then
                         wasHunting = false
-                        if huntNotifActive then
-                            notify("Safe", "Hunt ended. Ghost returned to roaming.", 3)
-                        end
+                        if huntNotifActive then notify("Safe", "Hunt ended. Ghost returned to roaming.", 3) end
                     end
                 end
 
@@ -1012,7 +1090,6 @@ pcall(function()
                     ghostHighlight.Enabled = true
                     ghostHighlight.Adornee = ghost
                     ghostHighlight.FillColor = isHunting and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 45, 45)
-
                     ghostBillboard.Enabled = true
                     ghostBillboard.Adornee = hrp
                     distLbl.Text = (isHunting and "HUNTING [" or "Ghost [") .. tostring(dist) .. "m]"
@@ -1038,7 +1115,6 @@ pcall(function()
                     local hrp = ghost:FindFirstChild("HumanoidRootPart")
                     if hrp then
                         local liveSpeed = hrp.AssemblyLinearVelocity.Magnitude
-
                         if liveSpeed < 0.5 then
                             SpeedValue.Text = "Speed=(0.00) [Stationary / Manifest]"
                             SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
@@ -1065,7 +1141,6 @@ pcall(function()
                     end
 
                     local realSkin = nil
-
                     for _, obj in pairs(ghost:GetChildren()) do
                         if obj:IsA("MeshPart") or obj:IsA("Model") or obj:IsA("Accessory") then
                             local n = string.lower(obj.Name)
@@ -1082,10 +1157,7 @@ pcall(function()
                     if not realSkin then
                         local gName = string.lower(ghost.Name)
                         for _, m in pairs(GHOST_MODELS) do
-                            if string.find(gName, string.lower(m)) then
-                                realSkin = m
-                                break
-                            end
+                            if string.find(gName, string.lower(m)) then realSkin = m break end
                         end
                     end
 
@@ -1098,104 +1170,6 @@ pcall(function()
                 end
             end)
             task.wait(0.5)
-        end
-    end)
-
-    -- Floating Throw Counter Widget
-    local function createGhostBusterThrowCounter()
-        local TC_Gui = Instance.new("ScreenGui")
-        TC_Gui.Name = "GhostBusterThrowCounter"
-        TC_Gui.ResetOnSpawn = false
-        TC_Gui.DisplayOrder = 999999
-        TC_Gui.IgnoreGuiInset = true
-        TC_Gui.Parent = pGui
-
-        local CounterFrame = Instance.new("Frame")
-        CounterFrame.Name = "CounterFrame"
-        CounterFrame.Size = UDim2.new(0, 160, 0, 52)
-        CounterFrame.Position = UDim2.new(0.5, -80, 0.05, 0)
-        CounterFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
-        CounterFrame.BorderSizePixel = 0
-        CounterFrame.Active = true
-        CounterFrame.Parent = TC_Gui
-
-        local Corner = Instance.new("UICorner")
-        Corner.CornerRadius = UDim.new(0, 10)
-        Corner.Parent = CounterFrame
-
-        local Stroke = Instance.new("UIStroke")
-        Stroke.Color = Color3.fromRGB(45, 50, 70)
-        Stroke.Thickness = 1.2
-        Stroke.Parent = CounterFrame
-
-        local DragTitle = Instance.new("TextLabel")
-        DragTitle.Name = "DragTitle"
-        DragTitle.Size = UDim2.new(1, 0, 0, 20)
-        DragTitle.Position = UDim2.new(0, 0, 0, 4)
-        DragTitle.BackgroundTransparency = 1
-        DragTitle.Text = "THROW COUNTER"
-        DragTitle.TextColor3 = Color3.fromRGB(220, 225, 240)
-        DragTitle.TextSize = 11
-        DragTitle.Font = Enum.Font.GothamBold
-        DragTitle.Parent = CounterFrame
-
-        local CountLabel = Instance.new("TextLabel")
-        CountLabel.Name = "Count"
-        CountLabel.Size = UDim2.new(1, 0, 0, 22)
-        CountLabel.Position = UDim2.new(0, 0, 0, 24)
-        CountLabel.BackgroundTransparency = 1
-        CountLabel.Text = "Throws detected: 0"
-        CountLabel.TextColor3 = Color3.fromRGB(255, 75, 75)
-        CountLabel.TextSize = 12
-        CountLabel.Font = Enum.Font.GothamBold
-        CountLabel.Parent = CounterFrame
-
-        makeDraggable(CounterFrame, CounterFrame)
-        return CountLabel
-    end
-
-    local liveFloatingThrowLabel = createGhostBusterThrowCounter()
-
-    -- Aggression & Throw Monitor
-    task.spawn(function()
-        local itemPosCache = {}
-
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                local itemsFolder = Workspace:FindFirstChild("Items")
-                if itemsFolder then
-                    local currentMoved = 0
-
-                    for _, itm in pairs(itemsFolder:GetChildren()) do
-                        local r = itm:FindFirstChild("RootPart") or itm:FindFirstChild("Handle") or itm:FindFirstChildWhichIsA("BasePart")
-                        if r and isInsideHouse(r.Position) then
-                            local lastPos = itemPosCache[itm]
-                            if lastPos then
-                                local movedDist = (r.Position - lastPos).Magnitude
-                                if movedDist > 2.0 and r.AssemblyLinearVelocity.Magnitude > 3.0 then
-                                    currentMoved = currentMoved + 1
-                                    totalThrowsCount = totalThrowsCount + 1
-                                    local throwTxt = "Throws detected: " .. tostring(totalThrowsCount)
-                                    ThrowCounterCard.Text = throwTxt
-                                    if liveFloatingThrowLabel then
-                                        liveFloatingThrowLabel.Text = throwTxt
-                                    end
-                                end
-                            end
-                            itemPosCache[itm] = r.Position
-                        end
-                    end
-
-                    if currentMoved >= 3 then
-                        if dynamicGhostGuess ~= "Oni" then
-                            dynamicGhostGuess = "Oni"
-                            dynamicReason = "Aggressive Multi-Throw"
-                            notify("Behavior Detected", "Multi-Throw Detected! Predicted: Oni", 4)
-                        end
-                    end
-                end
-            end)
-            task.wait(0.6)
         end
     end)
 
@@ -1235,25 +1209,18 @@ pcall(function()
                     CurrentRoomValue.Text = "CurrentRoom: " .. currentGhostRoom
 
                     if roomNotifActive == true and currentGhostRoom ~= "Unknown" and currentGhostRoom ~= lastTrackedRoom then
-                        if lastTrackedRoom ~= "" then
-                            notify("Room Relocation", "Ghost entered: " .. currentGhostRoom, 3)
-                        end
+                        if lastTrackedRoom ~= "" then notify("Room Relocation", "Ghost entered: " .. currentGhostRoom, 3) end
                     end
                     lastTrackedRoom = currentGhostRoom
 
-                    if ghost:GetAttribute("FavoriteRoom") then
-                        FavoriteRoomValue.Text = "FavoriteRoom: " .. tostring(ghost:GetAttribute("FavoriteRoom"))
-                    end
+                    if ghost:GetAttribute("FavoriteRoom") then FavoriteRoomValue.Text = "FavoriteRoom: " .. tostring(ghost:GetAttribute("FavoriteRoom")) end
                     if ghost:GetAttribute("Gender") then
                         local gdr = tostring(ghost:GetAttribute("Gender"))
                         GenderValue.Text = "Ghost gender: " .. gdr
                         GenderValue.TextColor3 = (string.lower(gdr) == "female") and Color3.fromRGB(255, 120, 180) or Color3.fromRGB(56, 189, 248)
                     end
-
                     local gAge = ghost:GetAttribute("Age") or ghost:GetAttribute("GhostAge")
-                    if gAge then
-                        AgeValue.Text = "Ghost Age: " .. tostring(gAge) .. " yrs"
-                    end
+                    if gAge then AgeValue.Text = "Ghost Age: " .. tostring(gAge) .. " yrs" end
                 end
             end)
             task.wait(0.5)
@@ -1295,10 +1262,8 @@ pcall(function()
                         end
 
                         local isValidLocation = true
-                        if targetFavPos and tPos then
-                            if (tPos - targetFavPos).Magnitude > 28 then
-                                isValidLocation = false
-                            end
+                        if targetFavPos and tPos and (tPos - targetFavPos).Magnitude > 28 then
+                            isValidLocation = false
                         end
 
                         if isValidLocation then
@@ -1306,10 +1271,8 @@ pcall(function()
                                 if lbl:IsA("TextLabel") and lbl.Visible and lbl.Text ~= "" then
                                     local cleanTxt = string.gsub(lbl.Text, "[^%-%d%.]", "")
                                     local tempVal = tonumber(cleanTxt)
-                                    if tempVal then
-                                        if not lowestTemp or tempVal < lowestTemp then
-                                            lowestTemp = tempVal
-                                        end
+                                    if tempVal and (not lowestTemp or tempVal < lowestTemp) then
+                                        lowestTemp = tempVal
                                     end
                                 end
                             end
@@ -1342,7 +1305,6 @@ pcall(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
                 local allTools = getAllToolModels()
-
                 for _, itemModel in pairs(allTools) do
                     local root = itemModel:FindFirstChild("RootPart") or itemModel:FindFirstChild("Handle") or itemModel:FindFirstChildWhichIsA("BasePart")
                     local itemPos = root and root.Position
@@ -1360,7 +1322,6 @@ pcall(function()
 
                         if not activeEvidences["EMFLevel5"] and (category == "EMF Reader" or string.find(string.lower(itemModel.Name), "volt") or string.find(string.lower(itemModel.Name), "emf")) then
                             local isEmf5 = false
-
                             local part5 = itemModel:FindFirstChild("5", true)
                             if part5 and part5:IsA("BasePart") then
                                 if part5.Material == Enum.Material.Neon or part5.Color.R > 0.7 or part5.BrickColor.Name == "Bright red" or part5.BrickColor.Name == "Really red" then
@@ -1398,7 +1359,6 @@ pcall(function()
 
                         if not activeEvidences["SpiritBox"] and (category == "Spirit Box" or string.find(string.lower(itemModel.Name), "spiritbox")) then
                             local isBoxActive = false
-
                             local gt = itemModel:FindFirstChild("GhostTalk", true)
                             if gt and gt:IsA("BasePart") and (gt.Transparency < 0.5 or gt.Material == Enum.Material.Neon) then
                                 isBoxActive = true
@@ -1527,9 +1487,7 @@ pcall(function()
                                         end
                                     end
                                 end
-                                if totalPetals > 0 and darkPetals >= (totalPetals * 0.70) then
-                                    isWithered = true
-                                end
+                                if totalPetals > 0 and darkPetals >= (totalPetals * 0.70) then isWithered = true end
                             end
 
                             if isWithered then
@@ -1570,7 +1528,7 @@ pcall(function()
         end
     end)
 
-    -- Environmental Freezing, Orbs & Prints
+    -- Environmental Freezing, Orbs & Prints Fallback
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             local envWait = 1.0
@@ -1613,24 +1571,10 @@ pcall(function()
 
                 if not activeEvidences["GhostOrb"] then
                     local orbFound = false
-
                     local directOrb = Workspace:FindFirstChild("GhostOrb") or Workspace:FindFirstChild("Orb")
                     if directOrb then
                         local pos = directOrb:IsA("BasePart") and directOrb.Position or directOrb:GetPivot().Position
                         if isInsideHouse(pos) then orbFound = true end
-                    end
-
-                    if not orbFound then
-                        for _, obj in pairs(Workspace:GetChildren()) do
-                            local lName = string.lower(obj.Name)
-                            if (lName == "ghostorb" or lName == "orb") then
-                                local pos = obj:IsA("BasePart") and obj.Position or (obj:IsA("Model") and obj:GetPivot().Position)
-                                if pos and isInsideHouse(pos) then
-                                    orbFound = true
-                                    break
-                                end
-                            end
-                        end
                     end
 
                     if not orbFound and mapFolder then
@@ -1657,18 +1601,6 @@ pcall(function()
                             if p:IsA("BasePart") and isInsideHouse(p.Position) then
                                 foundPrint = true
                                 break
-                            end
-                        end
-                    end
-
-                    if not foundPrint then
-                        for _, obj in pairs(Workspace:GetChildren()) do
-                            local oName = string.lower(obj.Name)
-                            if (string.find(oName, "handprint") or string.find(oName, "footprint")) and obj:IsA("BasePart") then
-                                if isInsideHouse(obj.Position) then
-                                    foundPrint = true
-                                    break
-                                end
                             end
                         end
                     end
@@ -1717,7 +1649,6 @@ pcall(function()
                     end
                 end
 
-                -- Dynamic Priority Resolution (Evidence First, Predictions as Fluid Overwrites)
                 if count >= 4 then
                     if activeEvidences["GhostOrb"] and activeEvidences["FreezingTemperatures"] and activeEvidences["Inscription"] and activeEvidences["SpiritBox"] then
                         GhostTypeCard.Text = "Doppelganger (Fake Orb Detected!)"
@@ -1741,7 +1672,6 @@ pcall(function()
                     GhostTypeCard.Text = "Tie: " .. table.concat(matchingGhosts, " or ")
                     GhostTypeCard.TextColor3 = Color3.fromRGB(250, 204, 21)
                 elseif dynamicGhostGuess then
-                    -- Fluid override if no 3 evidence yet
                     GhostTypeCard.Text = dynamicGhostGuess .. " [" .. dynamicReason .. "] (Prediction)"
                     GhostTypeCard.TextColor3 = Color3.fromRGB(255, 175, 60)
                 else
@@ -1753,173 +1683,13 @@ pcall(function()
         end
     end)
 
-    -- Visual ESPs & Strict Favorite Room Text
+    -- Strict Favorite Room ESP
     local favRoomBillboard = nil
     local favRoomTextLabel = nil
 
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
-                local allTools = getAllToolModels()
-
-                if starterEspActive then
-                    for _, itemModel in pairs(allTools) do
-                        local actualName = getToolCategory(itemModel) or "Tool"
-                        if not itemModel:FindFirstChild("StarterESP") then
-                            local h = Instance.new("Highlight")
-                            h.Name = "StarterESP"
-                            h.FillColor = Color3.fromRGB(66, 133, 244)
-                            h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                            h.FillTransparency = 0.4
-                            h.Parent = itemModel
-
-                            local bg = Instance.new("BillboardGui")
-                            bg.Name = "StarterBillboard"
-                            bg.Size = UDim2.new(0, 120, 0, 22)
-                            bg.AlwaysOnTop = true
-                            bg.Adornee = itemModel:IsA("BasePart") and itemModel or (itemModel:FindFirstChildWhichIsA("BasePart") or itemModel)
-                            bg.Parent = itemModel
-
-                            local tl = Instance.new("TextLabel")
-                            tl.Name = "ToolLabel"
-                            tl.Size = UDim2.new(1, 0, 1, 0)
-                            tl.BackgroundTransparency = 1
-                            tl.Text = actualName
-                            tl.TextColor3 = Color3.fromRGB(138, 180, 248)
-                            tl.TextSize = 10.5
-                            tl.Font = Enum.Font.GothamBold
-                            tl.Parent = bg
-                        else
-                            local bg = itemModel:FindFirstChild("StarterBillboard")
-                            if bg and bg:FindFirstChild("ToolLabel") then
-                                bg.ToolLabel.Text = actualName
-                            end
-                        end
-                    end
-                else
-                    for _, itemModel in pairs(allTools) do
-                        local h = itemModel:FindFirstChild("StarterESP")
-                        if h then h:Destroy() end
-                        local bg = itemModel:FindFirstChild("StarterBillboard")
-                        if bg then bg:Destroy() end
-                    end
-                end
-
-                if printsEspActive then
-                    local function applyPrintVisual(printPart)
-                        if not printPart:FindFirstChild("PrintESP") then
-                            local h = Instance.new("Highlight")
-                            h.Name = "PrintESP"
-                            h.FillColor = Color3.fromRGB(74, 222, 128)
-                            h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                            h.FillTransparency = 0.3
-                            h.Adornee = printPart
-                            h.Parent = printPart
-
-                            local bg = Instance.new("BillboardGui")
-                            bg.Name = "PrintBillboard"
-                            bg.Size = UDim2.new(0, 100, 0, 22)
-                            bg.AlwaysOnTop = true
-                            bg.Adornee = printPart
-                            bg.Parent = printPart
-
-                            local tl = Instance.new("TextLabel")
-                            tl.Size = UDim2.new(1, 0, 1, 0)
-                            tl.BackgroundTransparency = 1
-                            local isFoot = string.find(string.lower(printPart.Name), "foot")
-                            tl.Text = isFoot and "Footprint" or "Handprint"
-                            tl.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            tl.TextSize = 11
-                            tl.Font = Enum.Font.GothamBold
-                            tl.Parent = bg
-                        end
-                    end
-
-                    local hpFolder = Workspace:FindFirstChild("Handprints", true)
-                    if hpFolder then
-                        for _, p in pairs(hpFolder:GetChildren()) do
-                            if p:IsA("BasePart") then applyPrintVisual(p) end
-                        end
-                    end
-
-                    for _, obj in pairs(Workspace:GetChildren()) do
-                        local oName = string.lower(obj.Name)
-                        if (string.find(oName, "handprint") or string.find(oName, "footprint")) and obj:IsA("BasePart") then
-                            applyPrintVisual(obj)
-                        end
-                    end
-                else
-                    local function cleanPrintVisual(obj)
-                        local h = obj:FindFirstChild("PrintESP")
-                        if h then h:Destroy() end
-                        local bg = obj:FindFirstChild("PrintBillboard")
-                        if bg then bg:Destroy() end
-                    end
-
-                    local hpFolder = Workspace:FindFirstChild("Handprints", true)
-                    if hpFolder then
-                        for _, p in pairs(hpFolder:GetChildren()) do cleanPrintVisual(p) end
-                    end
-                    for _, obj in pairs(Workspace:GetChildren()) do cleanPrintVisual(obj) end
-                end
-
-                if orbEspActive then
-                    local function applyOrbEsp(obj)
-                        if not obj:FindFirstChild("OrbESP") then
-                            local adorneePart = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
-                            if adorneePart then
-                                local h = Instance.new("Highlight")
-                                h.Name = "OrbESP"
-                                h.FillColor = Color3.fromRGB(56, 189, 248)
-                                h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                                h.FillTransparency = 0.2
-                                h.Adornee = obj
-                                h.Parent = obj
-
-                                local bg = Instance.new("BillboardGui")
-                                bg.Name = "OrbBillboard"
-                                bg.Size = UDim2.new(0, 110, 0, 26)
-                                bg.AlwaysOnTop = true
-                                bg.Adornee = adorneePart
-                                bg.Parent = obj
-
-                                local tl = Instance.new("TextLabel")
-                                tl.Size = UDim2.new(1, 0, 1, 0)
-                                tl.BackgroundTransparency = 1
-                                tl.Text = "Ghost Orb"
-                                tl.TextColor3 = Color3.fromRGB(56, 189, 248)
-                                tl.TextSize = 12
-                                tl.Font = Enum.Font.GothamBold
-                                tl.Parent = bg
-                            end
-                        end
-                    end
-
-                    for _, obj in pairs(Workspace:GetChildren()) do
-                        local lName = string.lower(obj.Name)
-                        if lName == "ghostorb" or lName == "orb" then applyOrbEsp(obj) end
-                    end
-
-                    local mapFolder = Workspace:FindFirstChild("Map")
-                    if mapFolder then
-                        for _, obj in pairs(mapFolder:GetChildren()) do
-                            local lName = string.lower(obj.Name)
-                            if lName == "ghostorb" or lName == "orb" then applyOrbEsp(obj) end
-                        end
-                    end
-                else
-                    for _, obj in pairs(Workspace:GetChildren()) do
-                        local lName = string.lower(obj.Name)
-                        if lName == "ghostorb" or lName == "orb" then
-                            local h = obj:FindFirstChild("OrbESP")
-                            if h then h:Destroy() end
-                            local bg = obj:FindFirstChild("OrbBillboard")
-                            if bg then bg:Destroy() end
-                        end
-                    end
-                end
-
-                -- Strict Favorite Room ESP
                 local ghost = getLiveGhost()
                 local favRoomName = ghost and (ghost:GetAttribute("FavoriteRoom") or ghost:GetAttribute("FavRoom"))
 
@@ -1981,9 +1751,7 @@ pcall(function()
 
                         favRoomBillboard.Enabled = true
                         favRoomBillboard.Adornee = targetRoomPart
-                        if favRoomTextLabel then
-                            favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName)
-                        end
+                        if favRoomTextLabel then favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName) end
                     end
                 else
                     if favRoomBillboard then favRoomBillboard.Enabled = false end
