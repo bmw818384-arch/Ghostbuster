@@ -877,12 +877,13 @@ pcall(function()
         end
     end)
 
-    -- 5 Special Ghost Detections Engine
+    -- 6 Special Ghost Detections Engine (Demonology Dump Verified)
     task.spawn(function()
         local lastGhostPos = nil
         local crossYPositions = {}
         local initialTeammateCount = #Players:GetPlayers()
         local previousGhostSpeed = nil
+        local baselineRoamSpeed = nil
 
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -890,22 +891,50 @@ pcall(function()
                 local ghost = getLiveGhost()
                 local hrp = ghost and ghost:FindFirstChild("HumanoidRootPart")
                 local gPos = hrp and hrp.Position
+                local currentGhostSpeed = hrp and hrp.AssemblyLinearVelocity.Magnitude or 0
 
-                -- 1. Demon: Crucifix Levitation & Burn
+                -- Speed Multiplier Baseline Sampler (for Oni Detection)
+                if not isHunting and currentGhostSpeed > 10.0 and currentGhostSpeed < 23.0 then
+                    baselineRoamSpeed = currentGhostSpeed
+                end
+
+                -- 1. Demon: Crucifix Levitation & Burn Engine (Handle, Flames, Crackle/Burst Dump Sync)
                 local itemsFolder = Workspace:FindFirstChild("Items")
                 if itemsFolder and not isHardLocked then
                     for _, itm in pairs(itemsFolder:GetChildren()) do
                         local nameL = string.lower(itm.Name)
-                        if string.find(nameL, "cross") or string.find(nameL, "crucifix") then
-                            local part = itm:FindFirstChild("Handle") or itm:FindFirstChildWhichIsA("BasePart")
-                            if part and isInsideHouse(part.Position) then
+                        local isCross = string.find(nameL, "cross") or string.find(nameL, "crucifix") or itm:FindFirstChild("Tie") or itm:FindFirstChild("Plank Horizontal")
+                        if isCross then
+                            local handlePart = itm:FindFirstChild("Handle") or itm:FindFirstChildWhichIsA("BasePart")
+                            if handlePart and isInsideHouse(handlePart.Position) then
                                 local initY = crossYPositions[itm]
                                 if not initY then
-                                    crossYPositions[itm] = part.Position.Y
+                                    crossYPositions[itm] = handlePart.Position.Y
                                 else
-                                    local diffY = part.Position.Y - initY
-                                    local burning = itm:FindFirstChildWhichIsA("ParticleEmitter", true) or itm:FindFirstChildWhichIsA("Fire", true) or itm:GetAttribute("Burnt") == true
-                                    if diffY > 1.2 and (burning or part.AssemblyLinearVelocity.Y > 0.8) then
+                                    local diffY = handlePart.Position.Y - initY
+                                    local isFlameActive = false
+
+                                    local flamesEmitter = itm:FindFirstChild("Flames", true)
+                                    if flamesEmitter and flamesEmitter:IsA("ParticleEmitter") and flamesEmitter.Enabled then
+                                        isFlameActive = true
+                                    end
+
+                                    local smokeEmitter = itm:FindFirstChild("Smoke", true)
+                                    if smokeEmitter and smokeEmitter:IsA("ParticleEmitter") and smokeEmitter.Enabled then
+                                        isFlameActive = true
+                                    end
+
+                                    for _, s in pairs(itm:GetDescendants()) do
+                                        if s:IsA("Sound") and s.IsPlaying then
+                                            local sName = string.lower(s.Name)
+                                            if sName == "crackle" or sName == "burst" then
+                                                isFlameActive = true
+                                                break
+                                            end
+                                        end
+                                    end
+
+                                    if diffY > 1.0 and (isFlameActive or handlePart.AssemblyLinearVelocity.Y > 0.6) then
                                         predictedGhost = "Demon"
                                         predictedReason = "Crucifix Levitation & Burn"
                                         isHardLocked = true
@@ -928,7 +957,7 @@ pcall(function()
                             predictedGhost = "Entity"
                             predictedReason = "Instant Frame Teleportation"
                             isHardLocked = true
-                            notify("Signature Verified", "Entity: Instant Teleportation Detected (" .. tostring(math.floor(moveDist)) .. " studs)!", 5)
+                            notify("Signature Verified", "Entity: Instant Teleportation (" .. tostring(math.floor(moveDist)) .. " studs)!", 5)
                             return
                         end
 
@@ -954,14 +983,27 @@ pcall(function()
                     lastGhostPos = gPos
                 end
 
-                -- 4. Banshee: Ghost Wail during hunt (Instead of Ghost Scream)
+                -- 4. Banshee: Ghost Wail during hunt (CurrentSound Dump Check)
                 if ghost and isHunting and not isHardLocked then
+                    local currentSound = ghost:FindFirstChild("CurrentSound", true)
+                    if currentSound and currentSound:IsA("Sound") and currentSound.IsPlaying then
+                        local sndName = string.lower(currentSound.Name)
+                        local sId = tostring(currentSound.SoundId)
+                        if string.find(sndName, "wail") or string.find(sndName, "cry") or sId == "rbxassetid://128820661683581" then
+                            predictedGhost = "Banshee"
+                            predictedReason = "Ghost Wail Hunt Audio Triggered"
+                            isHardLocked = true
+                            notify("Signature Verified", "Banshee: Ghost Wail Audio Detected!", 5)
+                            return
+                        end
+                    end
+
                     for _, snd in pairs(ghost:GetDescendants()) do
                         if snd:IsA("Sound") and snd.IsPlaying then
                             local sName = string.lower(snd.Name)
                             if string.find(sName, "wail") or string.find(sName, "cry") or string.find(sName, "banshee") then
                                 predictedGhost = "Banshee"
-                                predictedReason = "Ghost Wail Hunt Audio (No Standard Scream)"
+                                predictedReason = "Ghost Wail Audio Triggered"
                                 isHardLocked = true
                                 notify("Signature Verified", "Banshee: Ghost Wail Audio Detected!", 5)
                                 return
@@ -970,30 +1012,24 @@ pcall(function()
                     end
                 end
 
-                -- 5. Aswang: Salt Slowdown & Kill Speed Ramp
+                -- 5. Aswang: Verified Workspace.SaltPiles.SaltLine Slowdown & Kill Speed Ramp
                 if ghost and hrp and not isHardLocked then
-                    local currentGhostSpeed = hrp.AssemblyLinearVelocity.Magnitude
-
-                    -- Check Salt interaction
-                    if itemsFolder then
-                        for _, itm in pairs(itemsFolder:GetChildren()) do
-                            local nameL = string.lower(itm.Name)
-                            if string.find(nameL, "salt") then
-                                local sPart = itm:FindFirstChildWhichIsA("BasePart")
-                                if sPart and (sPart.Position - hrp.Position).Magnitude < 4.5 then
-                                    if previousGhostSpeed and previousGhostSpeed > 6.0 and currentGhostSpeed < (previousGhostSpeed * 0.65) then
-                                        predictedGhost = "Aswang"
-                                        predictedReason = "Walked through Salt & Slowed Down"
-                                        isHardLocked = true
-                                        notify("Signature Verified", "Aswang: Drastic Salt Slowdown Detected!", 5)
-                                        return
-                                    end
+                    local saltPilesFolder = Workspace:FindFirstChild("SaltPiles") or (itemsFolder and itemsFolder:FindFirstChild("SaltPiles"))
+                    if saltPilesFolder then
+                        for _, sLine in pairs(saltPilesFolder:GetChildren()) do
+                            local sCenter = sLine:FindFirstChild("Center") or sLine:FindFirstChild("Salt") or sLine:FindFirstChildWhichIsA("BasePart")
+                            if sCenter and (sCenter.Position - hrp.Position).Magnitude < 4.2 then
+                                if previousGhostSpeed and previousGhostSpeed > 6.0 and currentGhostSpeed < (previousGhostSpeed * 0.65) then
+                                    predictedGhost = "Aswang"
+                                    predictedReason = "SaltLine Contact Drastic Slowdown"
+                                    isHardLocked = true
+                                    notify("Signature Verified", "Aswang: Drastic SaltLine Slowdown Detected!", 5)
+                                    return
                                 end
                             end
                         end
                     end
 
-                    -- Check Kill Speed Spike
                     local currentTeammateCount = #Players:GetPlayers()
                     local ragdolls = Workspace:FindFirstChild("Ragdolls")
                     local deathCount = ragdolls and #ragdolls:GetChildren() or (initialTeammateCount - currentTeammateCount)
@@ -1008,6 +1044,20 @@ pcall(function()
                     end
 
                     previousGhostSpeed = currentGhostSpeed
+                end
+
+                -- 6. Oni: Hunt Overdrive Velocity Detection (Normal >20 / 4.07x >25)
+                if ghost and hrp and isHunting and not isHardLocked then
+                    local is4xMode = baselineRoamSpeed and baselineRoamSpeed >= 18.0
+                    local speedThreshold = is4xMode and 25.0 or 20.0
+
+                    if currentGhostSpeed > speedThreshold then
+                        predictedGhost = "Oni"
+                        predictedReason = is4xMode and "Overdrive Velocity (>25 in 4.07x Mode)" or "Overdrive Velocity (>20 in Normal Mode)"
+                        isHardLocked = true
+                        notify("Signature Verified", "Oni: Hunt Overdrive Velocity Detected (" .. string.format("%.1f", currentGhostSpeed) .. " spd)!", 5)
+                        return
+                    end
                 end
             end)
             task.wait(0.2)
@@ -1104,7 +1154,7 @@ pcall(function()
         end)
     end)
 
-    -- Dynamic Live Ghost Skin Scanner
+    -- Dynamic Live Ghost Velocity & Skin Scanner
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
