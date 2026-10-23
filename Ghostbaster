@@ -96,11 +96,13 @@ pcall(function()
         return true
     end
 
-    -- Main ScreenGui
+    -- Main ScreenGui Top-Priority
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "Ghostbuster"
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.DisplayOrder = 9999
+    ScreenGui.DisplayOrder = 999999
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = pGui
 
     -- Mobile Toggle Button
@@ -123,7 +125,7 @@ pcall(function()
     TBCorner.CornerRadius = UDim.new(0, 14)
     TBCorner.Parent = ToggleButton
 
-    -- Main Container Frame
+    -- Main Frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "Frame"
     MainFrame.Size = UDim2.new(0, 460, 0, 400)
@@ -299,8 +301,9 @@ pcall(function()
         return vLabel
     end
 
-    local function addToggleItem(parent, name, desc, defaultVal, onToggle)
+    local function addToggleItem(parent, name, desc, defaultVal, onToggle, customInstanceName)
         local tFrame = Instance.new("Frame")
+        tFrame.Name = "Frame"
         tFrame.Size = UDim2.new(1, 0, 0, 48)
         tFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
         tFrame.Parent = parent
@@ -337,6 +340,7 @@ pcall(function()
         dl.Parent = tFrame
 
         local sw = Instance.new("TextButton")
+        sw.Name = customInstanceName or "ToggleButton"
         sw.Size = UDim2.new(0, 36, 0, 18)
         sw.Position = UDim2.new(1, -44, 0.5, -9)
         sw.BackgroundColor3 = defaultVal and Color3.fromRGB(66, 133, 244) or Color3.fromRGB(45, 51, 72)
@@ -367,10 +371,12 @@ pcall(function()
             TweenService:Create(sw, TweenInfo.new(0.2), { BackgroundColor3 = targetColor }):Play()
             if onToggle then task.spawn(onToggle, state) end
         end)
+        return sw
     end
 
     local function addButtonItem(parent, name, desc, onClick)
         local bFrame = Instance.new("Frame")
+        bFrame.Name = "Frame"
         bFrame.Size = UDim2.new(1, 0, 0, 48)
         bFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
         bFrame.Parent = parent
@@ -430,75 +436,11 @@ pcall(function()
     local visionPage = createTab("Vision")
     local miscPage   = createTab("Misc")
 
-    -- Ghostbuster Stamina Hierarchy
+    -- Clean Infinite Stamina Slider (Dex Search Compatible)
     local infStaminaActive = true
-
-    local StaminaBtnContainer = Instance.new("Frame")
-    StaminaBtnContainer.Name = "Frame"
-    StaminaBtnContainer.Size = UDim2.new(1, 0, 0, 48)
-    StaminaBtnContainer.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
-    StaminaBtnContainer.BorderSizePixel = 0
-    StaminaBtnContainer.Parent = ghostPage
-
-    local SBtnCorner = Instance.new("UICorner")
-    SBtnCorner.CornerRadius = UDim.new(0, 8)
-    SBtnCorner.Parent = StaminaBtnContainer
-
-    local SBtnStroke = Instance.new("UIStroke")
-    SBtnStroke.Color = Color3.fromRGB(34, 37, 51)
-    SBtnStroke.Thickness = 1
-    SBtnStroke.Parent = StaminaBtnContainer
-
-    local InfiniteStaminaButton = Instance.new("TextButton")
-    InfiniteStaminaButton.Name = "InfiniteStaminaButton"
-    InfiniteStaminaButton.Size = UDim2.new(1, 0, 1, 0)
-    InfiniteStaminaButton.BackgroundTransparency = 1
-    InfiniteStaminaButton.Text = "Infinite Stamina: ON"
-    InfiniteStaminaButton.TextColor3 = Color3.fromRGB(74, 222, 128)
-    InfiniteStaminaButton.TextSize = 12
-    InfiniteStaminaButton.Font = Enum.Font.GothamBold
-    InfiniteStaminaButton.Parent = StaminaBtnContainer
-
-    InfiniteStaminaButton.MouseButton1Click:Connect(function()
-        infStaminaActive = not infStaminaActive
-        if infStaminaActive then
-            InfiniteStaminaButton.Text = "Infinite Stamina: ON"
-            InfiniteStaminaButton.TextColor3 = Color3.fromRGB(74, 222, 128)
-        else
-            InfiniteStaminaButton.Text = "Infinite Stamina: OFF"
-            InfiniteStaminaButton.TextColor3 = Color3.fromRGB(255, 80, 80)
-        end
-    end)
-
-    local StaminaConfigContainer = Instance.new("Frame")
-    StaminaConfigContainer.Name = "Frame"
-    StaminaConfigContainer.Size = UDim2.new(1, 0, 0, 48)
-    StaminaConfigContainer.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
-    StaminaConfigContainer.BorderSizePixel = 0
-    StaminaConfigContainer.Parent = ghostPage
-
-    local SCfgCorner = Instance.new("UICorner")
-    SCfgCorner.CornerRadius = UDim.new(0, 8)
-    SCfgCorner.Parent = StaminaConfigContainer
-
-    local SCfgStroke = Instance.new("UIStroke")
-    SCfgStroke.Color = Color3.fromRGB(34, 37, 51)
-    SCfgStroke.Thickness = 1
-    SCfgStroke.Parent = StaminaConfigContainer
-
-    local InfiniteStaminaConfigButton = Instance.new("TextButton")
-    InfiniteStaminaConfigButton.Name = "InfiniteStaminaConfigButton"
-    InfiniteStaminaConfigButton.Size = UDim2.new(1, 0, 1, 0)
-    InfiniteStaminaConfigButton.BackgroundTransparency = 1
-    InfiniteStaminaConfigButton.Text = "Infinite Stamina Config"
-    InfiniteStaminaConfigButton.TextColor3 = Color3.fromRGB(144, 148, 168)
-    InfiniteStaminaConfigButton.TextSize = 11.5
-    InfiniteStaminaConfigButton.Font = Enum.Font.GothamMedium
-    InfiniteStaminaConfigButton.Parent = StaminaConfigContainer
-
-    InfiniteStaminaConfigButton.MouseButton1Click:Connect(function()
-        notify("Stamina Config", "Native Energy 100% Lock active", 3)
-    end)
+    addToggleItem(ghostPage, "Infinite Stamina", "Locks player sprint energy permanently", true, function(on)
+        infStaminaActive = on
+    end, "InfiniteStaminaButton")
 
     -- Info Display Cards
     local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity", "GhostType: - [0/3]", Color3.fromRGB(255, 90, 90))
@@ -606,25 +548,27 @@ pcall(function()
         starterEspActive = on
     end)
 
-    -- Smart Lightswitch Controller
+    -- Smart Dump-Verified Lightswitch Controller
     local allLightsState = false
 
     local function isSwitchCurrentlyOn(model)
-        local prompt = model:FindFirstChildOfClass("ProximityPrompt") or model:FindFirstChild("ItemPrompt", true)
-        if prompt and prompt.ActionText then
-            local aText = string.lower(prompt.ActionText)
-            if string.find(aText, "turn off") or string.find(aText, "off") then
+        local stateAttr = model:GetAttribute("State")
+        if stateAttr ~= nil then
+            return stateAttr == true
+        end
+
+        local onPart = model:FindFirstChild("On")
+        if onPart and onPart:IsA("BasePart") then
+            if onPart.Transparency < 0.5 then
                 return true
-            elseif string.find(aText, "turn on") or string.find(aText, "on") then
-                return false
             end
         end
 
-        local onPart = model:FindFirstChild("On", true)
-        if onPart and onPart:IsA("BasePart") then
-            if onPart.Transparency < 0.5 or onPart.Material == Enum.Material.Neon then
-                return true
-            end
+        local prompt = model:FindFirstChildWhichIsA("ProximityPrompt", true)
+        if prompt and prompt.ActionText then
+            local aText = string.lower(prompt.ActionText)
+            if string.find(aText, "off") then return true end
+            if string.find(aText, "on") then return false end
         end
 
         return false
@@ -637,8 +581,8 @@ pcall(function()
 
         pcall(function()
             for _, obj in pairs(Workspace:GetDescendants()) do
-                if obj:IsA("Model") and string.find(string.lower(obj.Name), "lightswitch") then
-                    local prompt = obj:FindFirstChildOfClass("ProximityPrompt") or obj:FindFirstChild("ItemPrompt", true)
+                if obj:IsA("Model") and (obj.Name == "LightSwitch" or string.find(string.lower(obj.Name), "lightswitch")) then
+                    local prompt = obj:FindFirstChildWhichIsA("ProximityPrompt", true)
                     if prompt and fireproximityprompt then
                         local currentlyOn = isSwitchCurrentlyOn(obj)
                         if (targetTurnOn and not currentlyOn) or (not targetTurnOn and currentlyOn) then
@@ -663,34 +607,46 @@ pcall(function()
         toggleAllLightswitches(btn)
     end)
 
+    -- Smart Dump-Verified Fuse Box Sequencer
     local function smartTurnOnFuseBox()
         pcall(function()
-            local fBox = Workspace:FindFirstChild("FuseBox", true)
+            local fBox = Workspace:FindFirstChild("FuseBox", true) or Workspace:FindFirstChild("Fusebox", true)
             if not fBox then
                 notify("Fuse Box", "Fuse box not located", 3)
                 return
             end
 
-            local door = fBox:FindFirstChild("Door", true)
-            local doorPrompt = door and (door:FindFirstChildOfClass("ProximityPrompt") or door:FindFirstChild("ItemPrompt", true))
-            
-            if doorPrompt and fireproximityprompt then
-                fireproximityprompt(doorPrompt)
-                task.wait(0.35)
-            end
-
+            local openedDoor = false
             for _, p in pairs(fBox:GetDescendants()) do
-                if p:IsA("ProximityPrompt") and p ~= doorPrompt then
-                    fireproximityprompt(p)
-                    notify("Fuse Box", "Main power lever engaged", 4)
-                    return
+                if p:IsA("ProximityPrompt") then
+                    local aText = string.lower(p.ActionText or "")
+                    if string.find(aText, "open") or string.find(string.lower(p.Parent.Name), "door") then
+                        p.RequiresLineOfSight = false
+                        fireproximityprompt(p)
+                        openedDoor = true
+                        break
+                    end
                 end
             end
-            notify("Fuse Box", "Door opened. Switch prompt triggered.", 3)
+
+            task.wait(openedDoor and 0.35 or 0.1)
+
+            for _, p in pairs(fBox:GetDescendants()) do
+                if p:IsA("ProximityPrompt") then
+                    local aText = string.lower(p.ActionText or "")
+                    if string.find(aText, "turn on") or string.find(aText, "on") or not openedDoor then
+                        p.RequiresLineOfSight = false
+                        fireproximityprompt(p)
+                        notify("Fuse Box", "Main power lever engaged", 4)
+                        return
+                    end
+                end
+            end
+            notify("Fuse Box", "Action triggered", 3)
         end)
     end
 
-    addButtonItem(visionPage, "Smart Fuse Box", "Restores circuit breaker power", function()
+    addButtonItem(visionPage, "Smart Fuse Box", "Opens door and triggers main breaker lever", function()
         smartTurnOnFuseBox()
     end)
 
@@ -858,7 +814,7 @@ pcall(function()
         end)
     end)
 
-    -- Proper Natural Infinite Stamina Engine
+    -- Dump-Verified Native Stamina Hook (Stamina.Bar Lock)
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -877,9 +833,14 @@ pcall(function()
                     end
 
                     local hud = pGui:FindFirstChild("HUD")
-                    local stamBar = hud and hud:FindFirstChild("Stamina", true)
-                    if stamBar and (stamBar:IsA("Frame") or stamBar:IsA("GuiObject")) then
-                        stamBar.Size = UDim2.new(1, 0, stamBar.Size.Y.Scale, stamBar.Size.Y.Offset)
+                    if hud then
+                        local staminaFrame = hud:FindFirstChild("Stamina", true)
+                        if staminaFrame then
+                            local bar = staminaFrame:FindFirstChild("Bar") or staminaFrame
+                            if bar and (bar:IsA("Frame") or bar:IsA("GuiObject")) then
+                                bar.Size = UDim2.new(1, 0, bar.Size.Y.Scale, bar.Size.Y.Offset)
+                            end
+                        end
                     end
 
                     for _, lbl in pairs(pGui:GetDescendants()) do
@@ -1060,7 +1021,8 @@ pcall(function()
         local TC_Gui = Instance.new("ScreenGui")
         TC_Gui.Name = "GhostBusterThrowCounter"
         TC_Gui.ResetOnSpawn = false
-        TC_Gui.DisplayOrder = 9999
+        TC_Gui.DisplayOrder = 999999
+        TC_Gui.IgnoreGuiInset = true
         TC_Gui.Parent = pGui
 
         local CounterFrame = Instance.new("Frame")
@@ -1535,17 +1497,17 @@ pcall(function()
                                         end
                                     end
                                 end
+                                return false
                             end
-                            return false
-                        end
 
-                        if checkPageDecal(lp) or checkPageDecal(rp) or itemModel:GetAttribute("Written") == true then
-                            hasRealWriting = true
-                        end
+                            if checkPageDecal(lp) or checkPageDecal(rp) or itemModel:GetAttribute("Written") == true then
+                                hasRealWriting = true
+                            end
 
-                        if hasRealWriting then
-                            activeEvidences["Inscription"] = true
-                            notify("Confirmed Evidence", "Inscription Verified!", 3)
+                            if hasRealWriting then
+                                activeEvidences["Inscription"] = true
+                                notify("Confirmed Evidence", "Inscription Verified!", 3)
+                            end
                         end
                     end
                 end
@@ -1976,3 +1938,4 @@ pcall(function()
 
     notify("Ghostbuster Initialized", "All layers operational", 4)
 end)
+                    
