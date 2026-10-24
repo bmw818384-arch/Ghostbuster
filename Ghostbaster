@@ -12,13 +12,16 @@ pcall(function()
         LocalPlayer = Players.LocalPlayer
     end
 
+    local ghostNotifActive = false -- Default OFF to prevent notification flooding
+
     local function notify(title, text, duration)
+        if not ghostNotifActive and string.find(string.lower(title), "confirm") then return end
         task.spawn(function()
             pcall(function()
                 StarterGui:SetCore("SendNotification", {
                     Title = title,
                     Text = text,
-                    Duration = duration or 4
+                    Duration = duration or 3
                 })
             end)
         end)
@@ -39,9 +42,144 @@ pcall(function()
     if not pGui then return end
 
     pcall(function()
+        if pGui:FindFirstChild("GB_LoadingScreen") then pGui.GB_LoadingScreen:Destroy() end
         if pGui:FindFirstChild("Ghostbuster") then pGui.Ghostbuster:Destroy() end
         if pGui:FindFirstChild("GhostBusterThrowCounter") then pGui.GhostBusterThrowCounter:Destroy() end
     end)
+
+    -- 1. ANIMATED SCREEN LOADING SEQUENCE
+    local LoadGui = Instance.new("ScreenGui")
+    LoadGui.Name = "GB_LoadingScreen"
+    LoadGui.ResetOnSpawn = false
+    LoadGui.DisplayOrder = 9999999
+    LoadGui.IgnoreGuiInset = true
+    LoadGui.Parent = pGui
+
+    local LoadBg = Instance.new("Frame")
+    LoadBg.Size = UDim2.new(1, 0, 1, 0)
+    LoadBg.BackgroundColor3 = Color3.fromRGB(10, 11, 16)
+    LoadBg.BackgroundTransparency = 0.25
+    LoadBg.BorderSizePixel = 0
+    LoadBg.Parent = LoadGui
+
+    local ParticleContainer = Instance.new("Frame")
+    ParticleContainer.Size = UDim2.new(1, 0, 1, 0)
+    ParticleContainer.BackgroundTransparency = 1
+    ParticleContainer.ClipsDescendants = false
+    ParticleContainer.Parent = LoadBg
+
+    local isSpawningParticles = true
+    task.spawn(function()
+        while isSpawningParticles do
+            task.wait(math.random(6, 15) / 100)
+            local p = Instance.new("Frame")
+            local pSize = math.random(3, 7)
+            p.Size = UDim2.new(0, pSize, 0, pSize)
+            p.Position = UDim2.new(math.random(5, 95) / 100, 0, 1.05, 0)
+            p.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+            p.BackgroundTransparency = math.random(2, 6) / 10
+            p.BorderSizePixel = 0
+            p.Parent = ParticleContainer
+
+            local pCorner = Instance.new("UICorner")
+            pCorner.CornerRadius = UDim.new(1, 0)
+            pCorner.Parent = p
+
+            local moveTime = math.random(25, 45) / 10
+            local targetX = p.Position.X.Scale + (math.random(-10, 10) / 100)
+            local tween = TweenService:Create(p, TweenInfo.new(moveTime, Enum.EasingStyle.Linear), {
+                Position = UDim2.new(targetX, 0, -0.1, 0),
+                BackgroundTransparency = 1
+            })
+            tween:Play()
+            task.delay(moveTime, function() p:Destroy() end)
+        end
+    end)
+
+    local LoadBox = Instance.new("Frame")
+    LoadBox.Size = UDim2.new(0, 340, 0, 220)
+    LoadBox.Position = UDim2.new(0.5, -170, 0.5, -110)
+    LoadBox.BackgroundColor3 = Color3.fromRGB(18, 20, 30)
+    LoadBox.BorderSizePixel = 0
+    LoadBox.ClipsDescendants = true
+    LoadBox.Parent = LoadBg
+
+    local LoadBoxCorner = Instance.new("UICorner")
+    LoadBoxCorner.CornerRadius = UDim.new(0, 18)
+    LoadBoxCorner.Parent = LoadBox
+
+    local LoadBoxStroke = Instance.new("UIStroke")
+    LoadBoxStroke.Color = Color3.fromRGB(66, 133, 244)
+    LoadBoxStroke.Thickness = 1.6
+    LoadBoxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    LoadBoxStroke.Parent = LoadBox
+
+    local LoadTitle = Instance.new("TextLabel")
+    LoadTitle.Size = UDim2.new(1, 0, 0, 24)
+    LoadTitle.Position = UDim2.new(0, 0, 0, 14)
+    LoadTitle.BackgroundTransparency = 1
+    LoadTitle.Text = "GHOSTBUSTER 4.07x"
+    LoadTitle.TextColor3 = Color3.fromRGB(138, 180, 248)
+    LoadTitle.TextSize = 15
+    LoadTitle.Font = Enum.Font.GothamBold
+    LoadTitle.Parent = LoadBox
+
+    local LoadLogo = Instance.new("ImageLabel")
+    LoadLogo.Size = UDim2.new(0, 56, 0, 56)
+    LoadLogo.Position = UDim2.new(0.5, -28, 0, 44)
+    LoadLogo.BackgroundColor3 = Color3.fromRGB(24, 28, 42)
+    LoadLogo.Image = "rbxassetid://129691744093416"
+    LoadLogo.Parent = LoadBox
+
+    local LoadLogoCorner = Instance.new("UICorner")
+    LoadLogoCorner.CornerRadius = UDim.new(0, 14)
+    LoadLogoCorner.Parent = LoadLogo
+
+    local LoadLogoStroke = Instance.new("UIStroke")
+    LoadLogoStroke.Color = Color3.fromRGB(80, 150, 255)
+    LoadLogoStroke.Thickness = 1.4
+    LoadLogoStroke.Parent = LoadLogo
+
+    local LoadSubText = Instance.new("TextLabel")
+    LoadSubText.Size = UDim2.new(1, 0, 0, 20)
+    LoadSubText.Position = UDim2.new(0, 0, 0, 108)
+    LoadSubText.BackgroundTransparency = 1
+    LoadSubText.Text = "Loading Script..."
+    LoadSubText.TextColor3 = Color3.fromRGB(220, 225, 245)
+    LoadSubText.TextSize = 13
+    LoadSubText.Font = Enum.Font.GothamMedium
+    LoadSubText.Parent = LoadBox
+
+    local LoadBarTrack = Instance.new("Frame")
+    LoadBarTrack.Size = UDim2.new(0, 260, 0, 8)
+    LoadBarTrack.Position = UDim2.new(0.5, -130, 0, 136)
+    LoadBarTrack.BackgroundColor3 = Color3.fromRGB(30, 34, 50)
+    LoadBarTrack.BorderSizePixel = 0
+    LoadBarTrack.Parent = LoadBox
+
+    local LoadTrackCorner = Instance.new("UICorner")
+    LoadTrackCorner.CornerRadius = UDim.new(1, 0)
+    LoadTrackCorner.Parent = LoadBarTrack
+
+    local LoadBarFill = Instance.new("Frame")
+    LoadBarFill.Size = UDim2.new(0, 0, 1, 0)
+    LoadBarFill.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+    LoadBarFill.BorderSizePixel = 0
+    LoadBarFill.Parent = LoadBarTrack
+
+    local LoadFillCorner = Instance.new("UICorner")
+    LoadFillCorner.CornerRadius = UDim.new(1, 0)
+    LoadFillCorner.Parent = LoadBarFill
+
+    local LoadPhaseText = Instance.new("TextLabel")
+    LoadPhaseText.Size = UDim2.new(1, 0, 0, 18)
+    LoadPhaseText.Position = UDim2.new(0, 0, 0, 154)
+    LoadPhaseText.BackgroundTransparency = 1
+    LoadPhaseText.Text = "Phase 1: Initializing Workspace & Memory..."
+    LoadPhaseText.TextColor3 = Color3.fromRGB(113, 118, 138)
+    LoadPhaseText.TextSize = 11
+    LoadPhaseText.Font = Enum.Font.Gotham
+    LoadPhaseText.Parent = LoadBox
 
     local function makeDraggable(frame, handle)
         local dragging, dragStart, startPos
@@ -99,6 +237,7 @@ pcall(function()
     ScreenGui.DisplayOrder = 999999
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Enabled = false
     ScreenGui.Parent = pGui
 
     local ToggleButton = Instance.new("ImageButton")
@@ -455,7 +594,7 @@ pcall(function()
         end
     end, "InfiniteStaminaButton")
 
-    local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity (4.07x Dump Lock)", "GhostType: Scanning Engine...", Color3.fromRGB(255, 90, 90))
+    local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity (Calibrated Engine)", "GhostType: Scanning...", Color3.fromRGB(255, 90, 90))
     local CurrentRoomValue  = createInfoCard(ghostPage, "Current Ghost Room", "CurrentRoom: Scanning...", Color3.fromRGB(250, 204, 21))
     local FavoriteRoomValue = createInfoCard(ghostPage, "Favorite Room", "FavoriteRoom: Scanning...", Color3.fromRGB(103, 232, 249))
     local GenderValue       = createInfoCard(ghostPage, "Entity Gender", "Ghost gender: Scanning...", Color3.fromRGB(56, 189, 248))
@@ -478,7 +617,7 @@ pcall(function()
     local totalThrowsCount = 0
 
     local dynamicGhostGuess = nil
-    local dynamicReason = ""
+    local isSolidConfirmed = false
 
     local GHOST_MODELS = {
         "Abaddon", "Biter", "Dr. Ratched", "Leech", "Marrow", "Mouthpiece", "Rattle", "Watcher"
@@ -499,6 +638,21 @@ pcall(function()
             end
         end
         return nil
+    end
+
+    local function updateGhostIdentity(name, solid)
+        if isSolidConfirmed and not solid then return end
+        if solid then
+            isSolidConfirmed = true
+            dynamicGhostGuess = name
+            GhostTypeCard.Text = name
+            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+            notify(name .. " Confirmed", name .. " verified via solid signature!", 4)
+        else
+            dynamicGhostGuess = name
+            GhostTypeCard.Text = name .. "(likely)"
+            GhostTypeCard.TextColor3 = Color3.fromRGB(250, 204, 21)
+        end
     end
 
     local originalLighting = {
@@ -642,7 +796,7 @@ pcall(function()
         end)
     end
 
-    -- 1. Banshee Subtitle Spy
+    -- 1. Banshee & Siren Subtitle / Audio Spy
     task.spawn(function()
         local function checkSubtitleText(lbl)
             if not lbl:IsA("TextLabel") then return end
@@ -650,13 +804,9 @@ pcall(function()
                 pcall(function()
                     local rawText = string.lower(lbl.Text)
                     if string.find(rawText, "ghost wail") or (string.find(rawText, "wail") and not string.find(rawText, "scream")) then
-                        if dynamicGhostGuess ~= "Banshee" then
-                            dynamicGhostGuess = "Banshee"
-                            dynamicReason = "Subtitle: [Ghost Wail] Verified"
-                            GhostTypeCard.Text = "Banshee [Ghost Wail Subtitle]"
-                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            notify("Signature Verified", "Banshee Confirmed via [Ghost Wail]!", 5)
-                        end
+                        updateGhostIdentity("Banshee", true)
+                    elseif string.find(rawText, "ghost singing") or string.find(rawText, "singing") then
+                        updateGhostIdentity("Siren", false)
                     end
                 end)
             end)
@@ -678,13 +828,7 @@ pcall(function()
                 task.wait(0.1)
                 local pos = obj:IsA("BasePart") and obj.Position or (obj:IsA("Model") and obj:GetPivot().Position)
                 if pos and isInsideHouse(pos) then
-                    if dynamicGhostGuess ~= "Doppelganger" then
-                        dynamicGhostGuess = "Doppelganger"
-                        dynamicReason = "Fake Ghost Orb Detected"
-                        GhostTypeCard.Text = "Doppelganger [Fake Orb Verified]"
-                        GhostTypeCard.TextColor3 = Color3.fromRGB(255, 100, 255)
-                        notify("Doppelganger Confirmed", "Fake Orb Detected in 4.07x mode!", 6)
-                    end
+                    updateGhostIdentity("Doppelganger", true)
                 end
             end
         end
@@ -693,94 +837,45 @@ pcall(function()
         Workspace.DescendantAdded:Connect(verifyOrb)
     end)
 
-    -- 3. Raw Hierarchy Dump Inspector Engine (Runs on Live Ghost)
+    -- 3. Solid Dump Lock (No False Generic Bones/Heads)
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
                 local ghost = getLiveGhost()
                 if ghost and isInsideHouse(ghost:GetPivot().Position) then
-                    -- A. UMBRA DUMP LOCK: GhostFootsteps Missing + Beam / SurfaceLight Aura
+                    -- A. UMBRA: No Footsteps Script + Real Beam Aura
                     local hasFootsteps = ghost:FindFirstChild("GhostFootsteps", true)
                     local hasBeam = ghost:FindFirstChildWhichIsA("Beam", true)
-                    local hasSurfaceLight = ghost:FindFirstChildWhichIsA("SurfaceLight", true)
-                    if not hasFootsteps and (hasBeam or hasSurfaceLight) then
-                        if dynamicGhostGuess ~= "Umbra" then
-                            dynamicGhostGuess = "Umbra"
-                            dynamicReason = "Dump Lock: No GhostFootsteps Script + Beam Aura"
-                            GhostTypeCard.Text = "Umbra [Silent Footsteps Dump Lock]"
-                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            notify("Umbra Confirmed", "Umbra Verified: No footsteps script detected!", 5)
-                        end
+                    if not hasFootsteps and hasBeam then
+                        updateGhostIdentity("Umbra", true)
                     end
 
-                    -- B. DEMON DUMP LOCK: GreenPoison Emitter or Necklace1/2 Parts
+                    -- B. DEMON: GreenPoison or Crucifix
                     local greenPoison = ghost:FindFirstChild("GreenPoison", true)
                     local necklacePart = ghost:FindFirstChild("Necklace1", true) or ghost:FindFirstChild("Necklace2", true)
-                    if greenPoison or necklacePart then
-                        if dynamicGhostGuess ~= "Demon" then
-                            dynamicGhostGuess = "Demon"
-                            dynamicReason = "Dump Lock: GreenPoison Emitter / Necklace"
-                            GhostTypeCard.Text = "Demon [GreenPoison / Necklace Dump Lock]"
-                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            notify("Demon Verified", "Demon Verified: GreenPoison Aura Detected!", 5)
-                        end
+                    if greenPoison and necklacePart then
+                        updateGhostIdentity("Demon", true)
+                    elseif greenPoison or necklacePart then
+                        updateGhostIdentity("Demon", false)
                     end
 
-                    -- C. ENTITY DUMP LOCK: Fire ParticleEmitter or FireLight PointLight
+                    -- C. ENTITY: Fire Emitter + FireLight
                     local fireEmitter = ghost:FindFirstChild("Fire", true)
                     local fireLight = ghost:FindFirstChild("FireLight", true)
-                    if fireEmitter or fireLight then
-                        if dynamicGhostGuess ~= "Entity" then
-                            dynamicGhostGuess = "Entity"
-                            dynamicReason = "Dump Lock: Fire Emitter / FireLight Detected"
-                            GhostTypeCard.Text = "Entity [Fire Particle Dump Lock]"
-                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            notify("Entity Confirmed", "Entity Verified: Internal Fire Aura Detected!", 5)
-                        end
+                    if fireEmitter and fireLight then
+                        updateGhostIdentity("Entity", true)
+                    elseif fireEmitter then
+                        updateGhostIdentity("Entity", false)
                     end
 
-                    -- D. ONI DUMP LOCK: Custom Bone Hierarchy or Speed-Streak Beam
-                    local customBone = ghost:FindFirstChildWhichIsA("Bone", true)
-                    local oniBeam = ghost:FindFirstChild("Beam", true)
-                    if customBone and (oniBeam or ghost:FindFirstChildWhichIsA("PointLight", true)) then
-                        if dynamicGhostGuess ~= "Oni" and dynamicGhostGuess ~= "Wretch" then
-                            dynamicGhostGuess = "Oni"
-                            dynamicReason = "Dump Lock: Bone Rig / Sprint Beam Detected"
-                            GhostTypeCard.Text = "Oni [Bone Rig & Sprint Beam Dump Lock]"
-                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            notify("Oni Confirmed", "Oni Verified: Custom Bone Rig Detected!", 5)
-                        end
-                    end
-
-                    -- E. VEX DUMP LOCK
+                    -- D. VEX: Cat Magnifying Glass BillboardGui
                     local catGui = ghost:FindFirstChild("Cat", true)
                     if catGui and catGui:IsA("BillboardGui") then
-                        if dynamicGhostGuess ~= "Vex" then
-                            dynamicGhostGuess = "Vex"
-                            dynamicReason = "Dump Lock: Cat Lens BillboardGui"
-                            GhostTypeCard.Text = "Vex [Cat Lens Billboard Dump Lock]"
-                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            notify("Vex Confirmed", "Vex Verified: Cat Lens Projection Detected!", 5)
-                        end
-                    end
-
-                    -- F. DULLAHAN DUMP LOCK: Headless Camera / Missing Face Decal Check
-                    local headPart = ghost:FindFirstChild("Head")
-                    if headPart then
-                        local faceDecal = headPart:FindFirstChildOfClass("Decal")
-                        if not faceDecal or headPart.Transparency >= 0.85 then
-                            if dynamicGhostGuess ~= "Dullahan" then
-                                dynamicGhostGuess = "Dullahan"
-                                dynamicReason = "Dump Lock: Headless Camera / Invisible Head"
-                                GhostTypeCard.Text = "Dullahan [Headless Trick Confirmed]"
-                                GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Dullahan Confirmed", "Dullahan Verified: Bina mundi wala bhoot!", 5)
-                            end
-                        end
+                        updateGhostIdentity("Vex", true)
                     end
                 end
             end)
-            task.wait(0.5)
+            task.wait(0.6)
         end
     end)
 
@@ -812,38 +907,12 @@ pcall(function()
                                     local flamesEmitter = itm:FindFirstChild("Flames", true)
                                     local isBurning = flamesEmitter and flamesEmitter:IsA("ParticleEmitter") and flamesEmitter.Enabled
 
-                                    if not isBurning then
-                                        for _, s in pairs(itm:GetDescendants()) do
-                                            if s:IsA("Sound") and s.IsPlaying then
-                                                local sName = string.lower(s.Name)
-                                                local sId = tostring(s.SoundId)
-                                                if sName == "crackle" or sName == "burst" or sId == "rbxassetid://239443642" or sId == "rbxassetid://7278163473" then
-                                                    isBurning = true
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end
-
                                     if isBurning then
                                         local yLift = handle.Position.Y - cache.baseY
                                         local isFloating = yLift > 0.6 or handle.AssemblyLinearVelocity.Y > 0.3
                                         local isSpinning = handle.AssemblyAngularVelocity.Magnitude > 1.2
-
-                                        local curLook = handle.CFrame.LookVector
-                                        local lastLook = cache.lastCFrame.LookVector
-                                        if curLook:Dot(lastLook) < 0.96 then
-                                            isSpinning = true
-                                        end
-
                                         if isFloating and isSpinning then
-                                            if dynamicGhostGuess ~= "Demon" then
-                                                dynamicGhostGuess = "Demon"
-                                                dynamicReason = "Crucifix Float & Spin Burn"
-                                                GhostTypeCard.Text = "Demon [Crucifix Float & Spin]"
-                                                GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                                notify("Demon Verified", "Crucifix Levitated, Spun and Burnt!", 5)
-                                            end
+                                            updateGhostIdentity("Demon", true)
                                         end
                                     end
                                     cache.lastCFrame = handle.CFrame
@@ -853,7 +922,7 @@ pcall(function()
                     end
                 end
 
-                -- Dybbuk Corpse Throw Check (Massive Velocity Yeet)
+                -- Dybbuk Corpse Throw Check (Massive Yeet Only)
                 local ragdolls = Workspace:FindFirstChild("Ragdolls")
                 if ragdolls then
                     for _, rModel in pairs(ragdolls:GetChildren()) do
@@ -861,13 +930,7 @@ pcall(function()
                         if mainBodyPart and mainBodyPart:IsA("BasePart") then
                             local bodyVel = mainBodyPart.AssemblyLinearVelocity
                             if bodyVel.Magnitude > 35.0 and math.abs(bodyVel.Y) > 10.0 then
-                                if dynamicGhostGuess ~= "Dybbuk" then
-                                    dynamicGhostGuess = "Dybbuk"
-                                    dynamicReason = "Massive Corpse Launch"
-                                    GhostTypeCard.Text = "Dybbuk [Corpse Yeet / Launch]"
-                                    GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                    notify("Dybbuk Verified", "Massive Corpse Throw Confirmed!", 5)
-                                end
+                                updateGhostIdentity("Dybbuk", true)
                                 break
                             end
                         end
@@ -881,13 +944,7 @@ pcall(function()
                         local sCenter = sLine:FindFirstChild("Center") or sLine:FindFirstChild("Salt") or sLine:FindFirstChildWhichIsA("BasePart")
                         if sCenter and (sCenter.Position - hrp.Position).Magnitude <= 5.0 then
                             if lastAswangSpeed and lastAswangSpeed > 6.0 and curSpeed < (lastAswangSpeed * 0.70) then
-                                if dynamicGhostGuess ~= "Aswang" then
-                                    dynamicGhostGuess = "Aswang"
-                                    dynamicReason = "SaltLine Step Slowdown"
-                                    GhostTypeCard.Text = "Aswang [SaltLine Slowdown]"
-                                    GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                    notify("Aswang Verified", "SaltLine Step Slowdown Confirmed!", 5)
-                                end
+                                updateGhostIdentity("Aswang", true)
                                 break
                             end
                         end
@@ -903,8 +960,6 @@ pcall(function()
         local lastGhostPos = nil
         local lastCheckTick = os.clock()
         local entityGhostSnaps = 0
-        local oniManifestCount = 0
-        local lastManifestState = false
         local vexClipTicks = 0
 
         while ScreenGui and ScreenGui.Parent do
@@ -918,21 +973,8 @@ pcall(function()
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- Oni Manifestation Tracker
-                    local isManifested = false
-                    for _, p in pairs(ghost:GetChildren()) do
-                        if (p:IsA("BasePart") or p:IsA("MeshPart")) and p.Transparency < 0.5 then
-                            isManifested = true
-                            break
-                        end
-                    end
-                    if isManifested and not lastManifestState and not isHunting then
-                        oniManifestCount = oniManifestCount + 1
-                    end
-                    lastManifestState = isManifested
-
-                    -- A. ONI / WRETCH HUNT SPRINT
-                    if isHunting and speed >= 30.0 then
+                    -- A. ONI / WRETCH HUNT SPRINT (Strict 31+ studs/s threshold)
+                    if isHunting and speed >= 31.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
                             local ch = p.Character
@@ -945,37 +987,23 @@ pcall(function()
                         local avgEnergy = (pCount > 0) and (totalEnergy / pCount) or 100
 
                         if avgEnergy < 50 then
-                            if dynamicGhostGuess ~= "Wretch" then
-                                dynamicGhostGuess = "Wretch"
-                                dynamicReason = "Sprint at Low Energy"
-                                GhostTypeCard.Text = "Wretch [Low Energy Sprint]"
-                                GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Wretch Confirmed", "Sprint under low team energy!", 5)
-                            end
+                            updateGhostIdentity("Wretch", true)
                         else
-                            if dynamicGhostGuess ~= "Oni" and dynamicGhostGuess ~= "Wretch" then
-                                dynamicGhostGuess = "Oni"
-                                dynamicReason = "Hunt Sprint & High Manifestations (" .. tostring(oniManifestCount) .. "x)"
-                                GhostTypeCard.Text = "Oni [Hunt Sprint + Manifestations]"
-                                GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Oni Confirmed", "Oni Hunt Sprint Verified!", 5)
-                            end
+                            updateGhostIdentity("Oni", true)
                         end
+                    elseif isHunting and speed >= 26.0 then
+                        updateGhostIdentity("Oni", false)
                     end
 
                     -- B. ENTITY TELEPORTATION JUMP
                     if lastGhostPos and dt > 0 and dt < 0.35 then
                         local dist = (curPos - lastGhostPos).Magnitude
-                        if dist > 16.0 and speed < 10.0 then
+                        if dist > 18.0 and speed < 8.0 then
                             entityGhostSnaps = entityGhostSnaps + 1
                             if entityGhostSnaps >= 2 then
-                                if dynamicGhostGuess ~= "Entity" then
-                                    dynamicGhostGuess = "Entity"
-                                    dynamicReason = "Teleported Roaming/Hunting (" .. tostring(entityGhostSnaps) .. "x)"
-                                    GhostTypeCard.Text = "Entity [Ghost Teleporting Confirmed]"
-                                    GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                    notify("Entity Confirmed", "Entity Teleportation Verified!", 5)
-                                end
+                                updateGhostIdentity("Entity", true)
+                            else
+                                updateGhostIdentity("Entity", false)
                             end
                         end
                     end
@@ -997,13 +1025,9 @@ pcall(function()
                             if isRealWall and not isDoor then
                                 vexClipTicks = vexClipTicks + 1
                                 if vexClipTicks >= 2 then
-                                    if dynamicGhostGuess ~= "Vex" then
-                                        dynamicGhostGuess = "Vex"
-                                        dynamicReason = "Confirmed Wall Phase (Noclip)"
-                                        GhostTypeCard.Text = "Vex [Wall Phase / Noclip Confirmed]"
-                                        GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                        notify("Vex Confirmed", "Ghost walked through solid wall!", 5)
-                                    end
+                                    updateGhostIdentity("Vex", true)
+                                else
+                                    updateGhostIdentity("Vex", false)
                                 end
                             else
                                 vexClipTicks = 0
@@ -1061,8 +1085,6 @@ pcall(function()
             btn.Text = targetTurnOn and "Turn OFF" or "Turn ON"
             btn.BackgroundColor3 = targetTurnOn and Color3.fromRGB(40, 140, 70) or Color3.fromRGB(43, 62, 115)
         end
-
-        notify("Lightswitch All", (targetTurnOn and "All lights turned ON (" or "All lights turned OFF (") .. tostring(count) .. " switched)", 3)
     end
 
     addButtonItem(visionPage, "Lightswitch All", "Toggles all house lights cleanly ON or OFF", function(btn)
@@ -1072,10 +1094,7 @@ pcall(function()
     local function smartTurnOnFuseBox()
         pcall(function()
             local fBox = Workspace:FindFirstChild("FuseBox", true) or Workspace:FindFirstChild("Fusebox", true)
-            if not fBox then
-                notify("Fuse Box", "Fuse box not located", 3)
-                return
-            end
+            if not fBox then return end
 
             local openedDoor = false
             for _, p in pairs(fBox:GetDescendants()) do
@@ -1098,17 +1117,20 @@ pcall(function()
                     if string.find(aText, "turn on") or string.find(aText, "on") or not openedDoor then
                         p.RequiresLineOfSight = false
                         fireproximityprompt(p)
-                        notify("Fuse Box", "Main power lever engaged", 4)
                         return
                     end
                 end
             end
-            notify("Fuse Box", "Action triggered", 3)
         end)
     end
 
     addButtonItem(visionPage, "Smart Fuse Box", "Opens door and triggers main breaker lever", function()
         smartTurnOnFuseBox()
+    end)
+
+    -- NEW NOTIFICATION TOGGLE: Silence spam on demand
+    addToggleItem(miscPage, "Ghost Detection Notification", "Toggles popup alerts when ghost is detected", false, function(on)
+        ghostNotifActive = on
     end)
 
     addToggleItem(miscPage, "Hunt Notification", "Alerts via notification during hunts", false, function(on)
@@ -1257,7 +1279,7 @@ pcall(function()
                             SpeedValue.Text = "Speed=(0.00) [Stationary / Manifest]"
                             SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
                         elseif isHunting then
-                            if liveSpeed >= 30.0 then
+                            if liveSpeed >= 31.0 then
                                 SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ONI SPRINT BURST]"
                                 SpeedValue.TextColor3 = Color3.fromRGB(255, 0, 0)
                             elseif liveSpeed >= 20.0 then
@@ -1511,5 +1533,39 @@ pcall(function()
         end
     end)
 
-    notify("Ghostbuster 4.07x Active", 4)
+    -- 2. PROGRESSION & FADE-OUT SEQUENCING
+    task.spawn(function()
+        LoadPhaseText.Text = "Phase 1: Reading Workspace & Memory..."
+        TweenService:Create(LoadBarFill, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0.35, 0, 1, 0)
+        }):Play()
+        task.wait(0.85)
+
+        LoadPhaseText.Text = "Phase 2: Hooking Ghost Behavioral Sensors..."
+        TweenService:Create(LoadBarFill, TweenInfo.new(1.0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0.75, 0, 1, 0)
+        }):Play()
+        task.wait(1.05)
+
+        LoadPhaseText.Text = "Phase 3: Ready! Launching Ghostbuster..."
+        TweenService:Create(LoadBarFill, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(1.0, 0, 1, 0)
+        }):Play()
+        task.wait(0.7)
+
+        isSpawningParticles = false
+        TweenService:Create(LoadBg, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+        TweenService:Create(LoadBox, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+        TweenService:Create(LoadTitle, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+        TweenService:Create(LoadSubText, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+        TweenService:Create(LoadPhaseText, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+        TweenService:Create(LoadLogo, TweenInfo.new(0.4), { ImageTransparency = 1 }):Play()
+        TweenService:Create(LoadBarTrack, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+        TweenService:Create(LoadBarFill, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+        task.wait(0.45)
+        LoadGui:Destroy()
+
+        ScreenGui.Enabled = true
+        notify("Ghostbuster 4.07x", "Engine Ready & Loaded Cleanly", 3)
+    end)
 end)
