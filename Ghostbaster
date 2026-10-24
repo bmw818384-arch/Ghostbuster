@@ -93,7 +93,6 @@ pcall(function()
         return true
     end
 
-    -- UI Construction (Dark Modern Glowing Style)
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "Ghostbuster"
     ScreenGui.ResetOnSpawn = false
@@ -429,7 +428,6 @@ pcall(function()
     local visionPage = createTab("Vision")
     local miscPage   = createTab("Misc")
 
-    -- Infinite Stamina Lock Engine
     local infStaminaActive = true
     local lockedEnergyVal = nil
     local lockedBarScaleX = nil
@@ -458,7 +456,6 @@ pcall(function()
         end
     end, "InfiniteStaminaButton")
 
-    -- Info Cards
     local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity (4.07x Behavior)", "GhostType: Scanning Behavior...", Color3.fromRGB(255, 90, 90))
     local CurrentRoomValue  = createInfoCard(ghostPage, "Current Ghost Room", "CurrentRoom: Scanning...", Color3.fromRGB(250, 204, 21))
     local FavoriteRoomValue = createInfoCard(ghostPage, "Favorite Room", "FavoriteRoom: Scanning...", Color3.fromRGB(103, 232, 249))
@@ -559,7 +556,6 @@ pcall(function()
         starterEspActive = on
     end)
 
-    -- Throw Counter Widget
     local function createGhostBusterThrowCounter()
         local TC_Gui = Instance.new("ScreenGui")
         TC_Gui.Name = "GhostBusterThrowCounter"
@@ -614,7 +610,6 @@ pcall(function()
 
     local liveFloatingThrowLabel = createGhostBusterThrowCounter()
 
-    -- Fast Throw Counter Hook
     local monitoredProps = {}
     local function hookPropListener(prop)
         if not prop:IsA("BasePart") or monitoredProps[prop] then return end
@@ -658,7 +653,7 @@ pcall(function()
         end)
     end
 
-    -- 1. Banshee Subtitle Spy Engine
+    -- 1. Banshee Subtitle Spy
     task.spawn(function()
         local function checkSubtitleText(lbl)
             if not lbl:IsA("TextLabel") then return end
@@ -822,7 +817,7 @@ pcall(function()
         end
     end)
 
-    -- 4. Advanced Pure Behavior Engine: Oni, Wretch, Vex, Entity
+    -- 4. Advanced Pure Behavior Engine: Oni (28+ Speed), Wretch, Vex, Entity
     task.spawn(function()
         local lastGhostPos = nil
         local lastCheckTick = os.clock()
@@ -837,9 +832,9 @@ pcall(function()
                 if ghost and hrp and isInsideHouse(hrp.Position) then
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
-                    -- A. Oni / Wretch 25+ Speed Sprint Detection
-                    if isHunting and speed >= 25.0 then
-                        -- Check players average energy for Wretch confirmation
+
+                    -- Strict 28+ Speed Check
+                    if isHunting and speed >= 28.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
                             local ch = p.Character
@@ -854,26 +849,25 @@ pcall(function()
                         if avgEnergy < 50 then
                             if dynamicGhostGuess ~= "Wretch" then
                                 dynamicGhostGuess = "Wretch"
-                                dynamicReason = "25+ Speed Sprint at Low Energy"
-                                GhostTypeCard.Text = "Wretch [Low Energy 25+ Sprint]"
+                                dynamicReason = "28+ Speed Sprint at Low Energy"
+                                GhostTypeCard.Text = "Wretch [Low Energy 28+ Sprint]"
                                 GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Wretch Confirmed", "25+ Speed Sprint under low team energy!", 5)
+                                notify("Wretch Confirmed", "28+ Speed Sprint under low team energy!", 5)
                             end
                         else
                             if dynamicGhostGuess ~= "Oni" and dynamicGhostGuess ~= "Wretch" then
                                 dynamicGhostGuess = "Oni"
-                                dynamicReason = "25+ Speed Aggressive Burst"
-                                GhostTypeCard.Text = "Oni [25+ Hyper Burst Sprint]"
+                                dynamicReason = "28+ Speed Hyper Burst"
+                                GhostTypeCard.Text = "Oni [28+ Hyper Burst Sprint]"
                                 GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Oni Confirmed", "Hyper Sprint 25+ Speed detected!", 5)
+                                notify("Oni Confirmed", "Hyper Sprint 28+ Speed detected!", 5)
                             end
                         end
                     end
 
-                    -- B. Entity: Instant Teleportation Jump Detection
+                    -- Entity: Instant Teleportation Jump Detection
                     if lastGhostPos and dt > 0 and dt < 0.35 then
                         local dist = (curPos - lastGhostPos).Magnitude
-                        -- If ghost moves > 16 studs in < 0.3s without high velocity
                         if dist > 16.0 and speed < 12.0 then
                             if dynamicGhostGuess ~= "Entity" then
                                 dynamicGhostGuess = "Entity"
@@ -885,7 +879,7 @@ pcall(function()
                         end
                     end
 
-                    -- C. Vex: Wall Phase / Noclip Detection
+                    -- Vex: Wall Phase / Noclip Detection
                     if lastGhostPos and (curPos - lastGhostPos).Magnitude > 2.0 then
                         local rayParams = RaycastParams.new()
                         rayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -968,7 +962,7 @@ pcall(function()
         toggleAllLightswitches(btn)
     end)
 
-    -- Smart Fuse Box
+    -- Smart Fuse Box Sequencer
     local function smartTurnOnFuseBox()
         pcall(function()
             local fBox = Workspace:FindFirstChild("FuseBox", true) or Workspace:FindFirstChild("Fusebox", true)
@@ -1147,7 +1141,7 @@ pcall(function()
         end)
     end)
 
-    -- Live Speed & Skin Monitor
+    -- Live Velocity & Skin Monitor
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1160,15 +1154,15 @@ pcall(function()
                             SpeedValue.Text = "Speed=(0.00) [Stationary / Manifest]"
                             SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
                         elseif isHunting then
-                            if liveSpeed >= 25.0 then
+                            if liveSpeed >= 28.0 then
                                 SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ONI / WRETCH SPRINT]"
                                 SpeedValue.TextColor3 = Color3.fromRGB(255, 0, 0)
-                            elseif liveSpeed >= 19.5 then
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [HYPER CHASE]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(255, 40, 40)
-                            else
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ACTIVE HUNT]"
+                            elseif liveSpeed >= 20.0 then
+                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [NORMAL / STACKED HUNT]"
                                 SpeedValue.TextColor3 = Color3.fromRGB(255, 130, 40)
+                            else
+                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [SLOW HUNT]"
+                                SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
                             end
                         else
                             if liveSpeed >= 20.0 then
@@ -1271,7 +1265,7 @@ pcall(function()
         end
     end)
 
-    -- Ghost Orb ESP (Tracks ghostorb / orb for Doppelganger)
+    -- Ghost Orb ESP
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1293,7 +1287,7 @@ pcall(function()
                                 bg.Size = UDim2.new(0, 140, 0, 26)
                                 bg.AlwaysOnTop = true
                                 bg.Adornee = adorneePart
-                                bg.Parent = adorneePart
+                                bg.Parent = bg
 
                                 local tl = Instance.new("TextLabel")
                                 tl.Size = UDim2.new(1, 0, 1, 0)
