@@ -427,7 +427,6 @@ pcall(function()
     local ghostPage  = createTab("Ghost")
     local visionPage = createTab("Vision")
     local miscPage   = createTab("Misc")
-
     local infStaminaActive = true
     local lockedEnergyVal = nil
     local lockedBarScaleX = nil
@@ -643,16 +642,6 @@ pcall(function()
         end)
     end
 
-    local interactFolder = Workspace:FindFirstChild("Interactables")
-    if interactFolder then
-        for _, itm in pairs(interactFolder:GetDescendants()) do
-            if itm:IsA("BasePart") then hookPropListener(itm) end
-        end
-        interactFolder.DescendantAdded:Connect(function(itm)
-            if itm:IsA("BasePart") then hookPropListener(itm) end
-        end)
-    end
-
     -- 1. Banshee Subtitle Spy
     task.spawn(function()
         local function checkSubtitleText(lbl)
@@ -704,7 +693,7 @@ pcall(function()
         Workspace.DescendantAdded:Connect(verifyOrb)
     end)
 
-    -- 3. Demon Levitate + Spin Burn, Dybbuk Launcher, Aswang Salt Step
+    -- 3. Demon, Fixed Dybbuk (Heavy Launch Check) & Aswang
     local crossStateCache = {}
     task.spawn(function()
         local lastAswangSpeed = nil
@@ -773,18 +762,20 @@ pcall(function()
                     end
                 end
 
-                -- Dybbuk Corpse Throw Check
+                -- FIXED DYBBUK: Strict Corpse Launch Verification (>35 Vel & >10 Y-Vel)
                 local ragdolls = Workspace:FindFirstChild("Ragdolls")
                 if ragdolls then
                     for _, rModel in pairs(ragdolls:GetChildren()) do
-                        for _, part in pairs(rModel:GetDescendants()) do
-                            if part:IsA("BasePart") and part.AssemblyLinearVelocity.Magnitude > 8.0 then
+                        local mainBodyPart = rModel:FindFirstChild("HumanoidRootPart") or rModel:FindFirstChild("Torso") or rModel:FindFirstChild("UpperTorso")
+                        if mainBodyPart and mainBodyPart:IsA("BasePart") then
+                            local bodyVel = mainBodyPart.AssemblyLinearVelocity
+                            if bodyVel.Magnitude > 35.0 and math.abs(bodyVel.Y) > 10.0 then
                                 if dynamicGhostGuess ~= "Dybbuk" then
                                     dynamicGhostGuess = "Dybbuk"
-                                    dynamicReason = "Corpse Throw"
-                                    GhostTypeCard.Text = "Dybbuk [Corpse Throw Launcher]"
+                                    dynamicReason = "Massive Corpse Launch"
+                                    GhostTypeCard.Text = "Dybbuk [Corpse Yeet / Launch]"
                                     GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                    notify("Dybbuk Verified", "Corpse Throw Detected!", 4)
+                                    notify("Dybbuk Verified", "Massive Corpse Throw Confirmed!", 5)
                                 end
                                 break
                             end
@@ -817,10 +808,13 @@ pcall(function()
         end
     end)
 
-    -- 4. Advanced Pure Behavior Engine: Oni (28+ Speed), Wretch, Vex, Entity
     task.spawn(function()
         local lastGhostPos = nil
         local lastCheckTick = os.clock()
+        local entityGhostSnaps = 0
+        local oniManifestCount = 0
+        local lastManifestState = false
+        local vexClipTicks = 0
 
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -833,8 +827,21 @@ pcall(function()
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- Strict 28+ Speed Check
-                    if isHunting and speed >= 28.0 then
+                    -- Check Ghost Manifestation (Oni High Manifestation Trait)
+                    local isManifested = false
+                    for _, p in pairs(ghost:GetChildren()) do
+                        if (p:IsA("BasePart") or p:IsA("MeshPart")) and p.Transparency < 0.5 then
+                            isManifested = true
+                            break
+                        end
+                    end
+                    if isManifested and not lastManifestState and not isHunting then
+                        oniManifestCount = oniManifestCount + 1
+                    end
+                    lastManifestState = isManifested
+
+                    -- A. ONI: Sprint During Hunts + Increased Manifestations
+                    if isHunting and speed >= 30.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
                             local ch = p.Character
@@ -849,56 +856,66 @@ pcall(function()
                         if avgEnergy < 50 then
                             if dynamicGhostGuess ~= "Wretch" then
                                 dynamicGhostGuess = "Wretch"
-                                dynamicReason = "28+ Speed Sprint at Low Energy"
-                                GhostTypeCard.Text = "Wretch [Low Energy 28+ Sprint]"
+                                dynamicReason = "Sprint at Low Energy"
+                                GhostTypeCard.Text = "Wretch [Low Energy Sprint]"
                                 GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Wretch Confirmed", "28+ Speed Sprint under low team energy!", 5)
+                                notify("Wretch Confirmed", "Sprint under low team energy!", 5)
                             end
                         else
                             if dynamicGhostGuess ~= "Oni" and dynamicGhostGuess ~= "Wretch" then
                                 dynamicGhostGuess = "Oni"
-                                dynamicReason = "28+ Speed Hyper Burst"
-                                GhostTypeCard.Text = "Oni [28+ Hyper Burst Sprint]"
+                                dynamicReason = "Hunt Sprint & High Manifestations (" .. tostring(oniManifestCount) .. "x)"
+                                GhostTypeCard.Text = "Oni [Hunt Sprint + Manifestations]"
                                 GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Oni Confirmed", "Hyper Sprint 28+ Speed detected!", 5)
+                                notify("Oni Confirmed", "Oni Hunt Sprint Verified!", 5)
                             end
                         end
                     end
 
-                    -- Entity: Instant Teleportation Jump Detection
+                    -- B. ENTITY: Teleporting around while Roaming/Hunting
                     if lastGhostPos and dt > 0 and dt < 0.35 then
                         local dist = (curPos - lastGhostPos).Magnitude
-                        if dist > 16.0 and speed < 12.0 then
-                            if dynamicGhostGuess ~= "Entity" then
-                                dynamicGhostGuess = "Entity"
-                                dynamicReason = "Instant Teleportation Jump"
-                                GhostTypeCard.Text = "Entity [Instant TP Jump Detected]"
-                                GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                notify("Entity Confirmed", "Instant Teleportation Jump detected!", 5)
+                        if dist > 16.0 and speed < 10.0 then
+                            entityGhostSnaps = entityGhostSnaps + 1
+                            if entityGhostSnaps >= 2 then
+                                if dynamicGhostGuess ~= "Entity" then
+                                    dynamicGhostGuess = "Entity"
+                                    dynamicReason = "Teleported Roaming/Hunting (" .. tostring(entityGhostSnaps) .. "x)"
+                                    GhostTypeCard.Text = "Entity [Ghost Teleporting Confirmed]"
+                                    GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                                    notify("Entity Confirmed", "Entity Teleportation Verified!", 5)
+                                end
                             end
                         end
                     end
 
-                    -- Vex: Wall Phase / Noclip Detection
-                    if lastGhostPos and (curPos - lastGhostPos).Magnitude > 2.0 then
+                    -- C. VEX: Strict Solid Wall Noclip Check (Doors Excluded)
+                    if lastGhostPos and (curPos - lastGhostPos).Magnitude > 3.0 then
+                        local moveDir = (curPos - lastGhostPos)
                         local rayParams = RaycastParams.new()
                         rayParams.FilterType = Enum.RaycastFilterType.Exclude
                         rayParams.FilterDescendantsInstances = {ghost, LocalPlayer.Character}
-                        local rayResult = Workspace:Raycast(lastGhostPos, (curPos - lastGhostPos), rayParams)
+                        local rayResult = Workspace:Raycast(lastGhostPos, moveDir, rayParams)
 
                         if rayResult and rayResult.Instance then
-                            local hitName = string.lower(rayResult.Instance.Name)
-                            local isWall = string.find(hitName, "wall") or string.find(hitName, "partition") or (rayResult.Instance.Size.X > 6 and rayResult.Instance.Size.Y > 6)
-                            local isDoor = string.find(hitName, "door")
+                            local hitPart = rayResult.Instance
+                            local hitName = string.lower(hitPart.Name)
+                            local isDoor = string.find(hitName, "door") or string.find(hitName, "frame") or string.find(hitName, "entrance")
+                            local isRealWall = (string.find(hitName, "wall") or string.find(hitName, "partition")) and (hitPart.Size.Y >= 8 and hitPart.Size.Magnitude > 10)
 
-                            if isWall and not isDoor then
-                                if dynamicGhostGuess ~= "Vex" then
-                                    dynamicGhostGuess = "Vex"
-                                    dynamicReason = "Phased Through Wall (Noclip)"
-                                    GhostTypeCard.Text = "Vex [Wall Phase / Noclip Detected]"
-                                    GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
-                                    notify("Vex Confirmed", "Vex phased through a wall!", 5)
+                            if isRealWall and not isDoor then
+                                vexClipTicks = vexClipTicks + 1
+                                if vexClipTicks >= 2 then
+                                    if dynamicGhostGuess ~= "Vex" then
+                                        dynamicGhostGuess = "Vex"
+                                        dynamicReason = "Confirmed Wall Phase (Noclip)"
+                                        GhostTypeCard.Text = "Vex [Wall Phase / Noclip Confirmed]"
+                                        GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                                        notify("Vex Confirmed", "Ghost walked through solid wall!", 5)
+                                    end
                                 end
+                            else
+                                vexClipTicks = 0
                             end
                         end
                     end
@@ -913,7 +930,6 @@ pcall(function()
         end
     end)
 
-    -- Smart Lightswitch Controller
     local allLightsState = false
     local function isSwitchCurrentlyOn(model)
         local stateAttr = model:GetAttribute("State")
@@ -962,7 +978,6 @@ pcall(function()
         toggleAllLightswitches(btn)
     end)
 
-    -- Smart Fuse Box Sequencer
     local function smartTurnOnFuseBox()
         pcall(function()
             local fBox = Workspace:FindFirstChild("FuseBox", true) or Workspace:FindFirstChild("Fusebox", true)
@@ -1013,7 +1028,6 @@ pcall(function()
         roomNotifActive = on
     end)
 
-    -- In-Place Stamina Lock Engine
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1048,7 +1062,6 @@ pcall(function()
         end
     end)
 
-    -- Ghost ESP & Visual Tracking
     local ghostHighlight = Instance.new("Highlight")
     ghostHighlight.Name = "LiveGhostHighlight"
     ghostHighlight.FillColor = Color3.fromRGB(255, 45, 45)
@@ -1141,7 +1154,6 @@ pcall(function()
         end)
     end)
 
-    -- Live Velocity & Skin Monitor
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1154,8 +1166,8 @@ pcall(function()
                             SpeedValue.Text = "Speed=(0.00) [Stationary / Manifest]"
                             SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
                         elseif isHunting then
-                            if liveSpeed >= 28.0 then
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ONI / WRETCH SPRINT]"
+                            if liveSpeed >= 30.0 then
+                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ONI SPRINT BURST]"
                                 SpeedValue.TextColor3 = Color3.fromRGB(255, 0, 0)
                             elseif liveSpeed >= 20.0 then
                                 SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [NORMAL / STACKED HUNT]"
@@ -1211,7 +1223,6 @@ pcall(function()
         end
     end)
 
-    -- Room State Tracker
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1265,7 +1276,6 @@ pcall(function()
         end
     end)
 
-    -- Ghost Orb ESP
     task.spawn(function()
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
@@ -1333,7 +1343,6 @@ pcall(function()
         end
     end)
 
-    -- Favorite Room ESP
     local favRoomBillboard = nil
     local favRoomTextLabel = nil
 
@@ -1411,5 +1420,5 @@ pcall(function()
         end
     end)
 
-    notify("Ghostbuster 4.07x Active", "Pure Behavioral Engine Online", 4)
+    notify("Ghostbuster 4.07x Active", "Calibrated Behavioral Engine Online", 4)
 end)
