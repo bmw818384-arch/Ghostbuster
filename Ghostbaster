@@ -455,7 +455,7 @@ pcall(function()
         end
     end, "InfiniteStaminaButton")
 
-    local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity (4.07x Behavior)", "GhostType: Scanning Behavior...", Color3.fromRGB(255, 90, 90))
+    local GhostTypeCard     = createInfoCard(ghostPage, "Ghost Identity (4.07x Dump Lock)", "GhostType: Scanning Engine...", Color3.fromRGB(255, 90, 90))
     local CurrentRoomValue  = createInfoCard(ghostPage, "Current Ghost Room", "CurrentRoom: Scanning...", Color3.fromRGB(250, 204, 21))
     local FavoriteRoomValue = createInfoCard(ghostPage, "Favorite Room", "FavoriteRoom: Scanning...", Color3.fromRGB(103, 232, 249))
     local GenderValue       = createInfoCard(ghostPage, "Entity Gender", "Ghost gender: Scanning...", Color3.fromRGB(56, 189, 248))
@@ -693,7 +693,98 @@ pcall(function()
         Workspace.DescendantAdded:Connect(verifyOrb)
     end)
 
-    -- 3. Demon, Fixed Dybbuk (Heavy Launch Check) & Aswang
+    -- 3. Raw Hierarchy Dump Inspector Engine (Runs on Live Ghost)
+    task.spawn(function()
+        while ScreenGui and ScreenGui.Parent do
+            pcall(function()
+                local ghost = getLiveGhost()
+                if ghost and isInsideHouse(ghost:GetPivot().Position) then
+                    -- A. UMBRA DUMP LOCK: GhostFootsteps Missing + Beam / SurfaceLight Aura
+                    local hasFootsteps = ghost:FindFirstChild("GhostFootsteps", true)
+                    local hasBeam = ghost:FindFirstChildWhichIsA("Beam", true)
+                    local hasSurfaceLight = ghost:FindFirstChildWhichIsA("SurfaceLight", true)
+                    if not hasFootsteps and (hasBeam or hasSurfaceLight) then
+                        if dynamicGhostGuess ~= "Umbra" then
+                            dynamicGhostGuess = "Umbra"
+                            dynamicReason = "Dump Lock: No GhostFootsteps Script + Beam Aura"
+                            GhostTypeCard.Text = "Umbra [Silent Footsteps Dump Lock]"
+                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                            notify("Umbra Confirmed", "Umbra Verified: No footsteps script detected!", 5)
+                        end
+                    end
+
+                    -- B. DEMON DUMP LOCK: GreenPoison Emitter or Necklace1/2 Parts
+                    local greenPoison = ghost:FindFirstChild("GreenPoison", true)
+                    local necklacePart = ghost:FindFirstChild("Necklace1", true) or ghost:FindFirstChild("Necklace2", true)
+                    if greenPoison or necklacePart then
+                        if dynamicGhostGuess ~= "Demon" then
+                            dynamicGhostGuess = "Demon"
+                            dynamicReason = "Dump Lock: GreenPoison Emitter / Necklace"
+                            GhostTypeCard.Text = "Demon [GreenPoison / Necklace Dump Lock]"
+                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                            notify("Demon Verified", "Demon Verified: GreenPoison Aura Detected!", 5)
+                        end
+                    end
+
+                    -- C. ENTITY DUMP LOCK: Fire ParticleEmitter or FireLight PointLight
+                    local fireEmitter = ghost:FindFirstChild("Fire", true)
+                    local fireLight = ghost:FindFirstChild("FireLight", true)
+                    if fireEmitter or fireLight then
+                        if dynamicGhostGuess ~= "Entity" then
+                            dynamicGhostGuess = "Entity"
+                            dynamicReason = "Dump Lock: Fire Emitter / FireLight Detected"
+                            GhostTypeCard.Text = "Entity [Fire Particle Dump Lock]"
+                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                            notify("Entity Confirmed", "Entity Verified: Internal Fire Aura Detected!", 5)
+                        end
+                    end
+
+                    -- D. ONI DUMP LOCK: Custom Bone Hierarchy or Speed-Streak Beam
+                    local customBone = ghost:FindFirstChildWhichIsA("Bone", true)
+                    local oniBeam = ghost:FindFirstChild("Beam", true)
+                    if customBone and (oniBeam or ghost:FindFirstChildWhichIsA("PointLight", true)) then
+                        if dynamicGhostGuess ~= "Oni" and dynamicGhostGuess ~= "Wretch" then
+                            dynamicGhostGuess = "Oni"
+                            dynamicReason = "Dump Lock: Bone Rig / Sprint Beam Detected"
+                            GhostTypeCard.Text = "Oni [Bone Rig & Sprint Beam Dump Lock]"
+                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                            notify("Oni Confirmed", "Oni Verified: Custom Bone Rig Detected!", 5)
+                        end
+                    end
+
+                    -- E. VEX DUMP LOCK
+                    local catGui = ghost:FindFirstChild("Cat", true)
+                    if catGui and catGui:IsA("BillboardGui") then
+                        if dynamicGhostGuess ~= "Vex" then
+                            dynamicGhostGuess = "Vex"
+                            dynamicReason = "Dump Lock: Cat Lens BillboardGui"
+                            GhostTypeCard.Text = "Vex [Cat Lens Billboard Dump Lock]"
+                            GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                            notify("Vex Confirmed", "Vex Verified: Cat Lens Projection Detected!", 5)
+                        end
+                    end
+
+                    -- F. DULLAHAN DUMP LOCK: Headless Camera / Missing Face Decal Check
+                    local headPart = ghost:FindFirstChild("Head")
+                    if headPart then
+                        local faceDecal = headPart:FindFirstChildOfClass("Decal")
+                        if not faceDecal or headPart.Transparency >= 0.85 then
+                            if dynamicGhostGuess ~= "Dullahan" then
+                                dynamicGhostGuess = "Dullahan"
+                                dynamicReason = "Dump Lock: Headless Camera / Invisible Head"
+                                GhostTypeCard.Text = "Dullahan [Headless Trick Confirmed]"
+                                GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
+                                notify("Dullahan Confirmed", "Dullahan Verified: Bina mundi wala bhoot!", 5)
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(0.5)
+        end
+    end)
+
+    -- 4. Demon Crucifix, Dybbuk Launch & Aswang Salt Step
     local crossStateCache = {}
     task.spawn(function()
         local lastAswangSpeed = nil
@@ -748,7 +839,7 @@ pcall(function()
                                         if isFloating and isSpinning then
                                             if dynamicGhostGuess ~= "Demon" then
                                                 dynamicGhostGuess = "Demon"
-                                                dynamicReason = "Cross Float & Spin Burn"
+                                                dynamicReason = "Crucifix Float & Spin Burn"
                                                 GhostTypeCard.Text = "Demon [Crucifix Float & Spin]"
                                                 GhostTypeCard.TextColor3 = Color3.fromRGB(74, 222, 128)
                                                 notify("Demon Verified", "Crucifix Levitated, Spun and Burnt!", 5)
@@ -762,7 +853,7 @@ pcall(function()
                     end
                 end
 
-                -- FIXED DYBBUK: Strict Corpse Launch Verification (>35 Vel & >10 Y-Vel)
+                -- Dybbuk Corpse Throw Check (Massive Velocity Yeet)
                 local ragdolls = Workspace:FindFirstChild("Ragdolls")
                 if ragdolls then
                     for _, rModel in pairs(ragdolls:GetChildren()) do
@@ -783,7 +874,7 @@ pcall(function()
                     end
                 end
 
-                -- Aswang SaltLine Step Slowdown Check
+                -- Aswang SaltLine Slowdown Check
                 local saltFolder = Workspace:FindFirstChild("SaltPiles") or (itemsFolder and itemsFolder:FindFirstChild("SaltPiles"))
                 if saltFolder and hrp then
                     for _, sLine in pairs(saltFolder:GetChildren()) do
@@ -827,7 +918,7 @@ pcall(function()
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- Check Ghost Manifestation (Oni High Manifestation Trait)
+                    -- Oni Manifestation Tracker
                     local isManifested = false
                     for _, p in pairs(ghost:GetChildren()) do
                         if (p:IsA("BasePart") or p:IsA("MeshPart")) and p.Transparency < 0.5 then
@@ -840,7 +931,7 @@ pcall(function()
                     end
                     lastManifestState = isManifested
 
-                    -- A. ONI: Sprint During Hunts + Increased Manifestations
+                    -- A. ONI / WRETCH HUNT SPRINT
                     if isHunting and speed >= 30.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
@@ -872,7 +963,7 @@ pcall(function()
                         end
                     end
 
-                    -- B. ENTITY: Teleporting around while Roaming/Hunting
+                    -- B. ENTITY TELEPORTATION JUMP
                     if lastGhostPos and dt > 0 and dt < 0.35 then
                         local dist = (curPos - lastGhostPos).Magnitude
                         if dist > 16.0 and speed < 10.0 then
@@ -889,7 +980,7 @@ pcall(function()
                         end
                     end
 
-                    -- C. VEX: Strict Solid Wall Noclip Check (Doors Excluded)
+                    -- C. VEX WALL NOCLIP CHECK
                     if lastGhostPos and (curPos - lastGhostPos).Magnitude > 3.0 then
                         local moveDir = (curPos - lastGhostPos)
                         local rayParams = RaycastParams.new()
@@ -1420,5 +1511,5 @@ pcall(function()
         end
     end)
 
-    notify("Ghostbuster 4.07x Active", "Calibrated Behavioral Engine Online", 4)
+    notify("Ghostbuster 4.07x Active", 4)
 end)
