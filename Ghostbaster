@@ -13,6 +13,7 @@ pcall(function()
     end
 
     local ghostNotifActive = false
+    local currentThemeColor = Color3.fromRGB(66, 133, 244) -- Default Blue
 
     local function notify(title, text, duration)
         if not ghostNotifActive and string.find(string.lower(title), "confirm") then return end
@@ -250,6 +251,7 @@ pcall(function()
     ToggleButton.Parent = ScreenGui
 
     local TBStroke = Instance.new("UIStroke")
+    TBStroke.Name = "DynamicStroke"
     TBStroke.Color = Color3.fromRGB(66, 133, 244)
     TBStroke.Thickness = 1.8
     TBStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -259,62 +261,61 @@ pcall(function()
     TBCorner.CornerRadius = UDim.new(0, 14)
     TBCorner.Parent = ToggleButton
 
+    -- GLOBAL GAME BACKGROUND PARTICLES (Game screen background when GUI open)
+    local GameParticleLayer = Instance.new("Folder")
+    GameParticleLayer.Name = "GameParticleLayer"
+    GameParticleLayer.Parent = ScreenGui
+
+    local globalParticlesEnabled = true
+    task.spawn(function()
+        while ScreenGui and ScreenGui.Parent do
+            task.wait(math.random(10, 25) / 100)
+            if globalParticlesEnabled and ScreenGui.Enabled then
+                pcall(function()
+                    local gp = Instance.new("Frame")
+                    local gpSize = math.random(4, 8)
+                    gp.Size = UDim2.new(0, gpSize, 0, gpSize)
+                    gp.Position = UDim2.new(math.random(2, 98) / 100, 0, 1.05, 0)
+                    gp.BackgroundColor3 = currentThemeColor
+                    gp.BackgroundTransparency = math.random(2, 6) / 10
+                    gp.BorderSizePixel = 0
+                    gp.ZIndex = 0
+                    gp.Parent = GameParticleLayer
+
+                    local gpCorner = Instance.new("UICorner")
+                    gpCorner.CornerRadius = UDim.new(1, 0)
+                    gpCorner.Parent = gp
+
+                    local floatTime = math.random(30, 55) / 10
+                    local targetX = gp.Position.X.Scale + (math.random(-15, 15) / 100)
+                    local tween = TweenService:Create(gp, TweenInfo.new(floatTime, Enum.EasingStyle.Linear), {
+                        Position = UDim2.new(targetX, 0, -0.05, 0),
+                        BackgroundTransparency = 1
+                    })
+                    tween:Play()
+                    task.delay(floatTime, function() gp:Destroy() end)
+                end)
+            end
+        end
+    end)
+
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "Frame"
-    MainFrame.Size = UDim2.new(0, 460, 0, 380)
+    MainFrame.Size = UDim2.new(0, 460, 0, 380) -- Medium Default Size
     MainFrame.Position = UDim2.new(0.5, -230, 0.5, -190)
     MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 24)
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = false
     MainFrame.Parent = ScreenGui
 
-    -- Ambient Particle Layer Behind Main Menu
-    local MainParticleLayer = Instance.new("Frame")
-    MainParticleLayer.Name = "MainParticleLayer"
-    MainParticleLayer.Size = UDim2.new(1, 60, 1, 60)
-    MainParticleLayer.Position = UDim2.new(0, -30, 0, -30)
-    MainParticleLayer.BackgroundTransparency = 1
-    MainParticleLayer.ZIndex = 0
-    MainParticleLayer.Parent = MainFrame
-
-    local isSpawningMainParticles = true
-    task.spawn(function()
-        while isSpawningMainParticles do
-            task.wait(math.random(15, 30) / 100)
-            if MainFrame.Visible and ScreenGui.Enabled then
-                local p = Instance.new("Frame")
-                local pSize = math.random(3, 6)
-                p.Size = UDim2.new(0, pSize, 0, pSize)
-                p.Position = UDim2.new(math.random(5, 95) / 100, 0, 1.0, 0)
-                p.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-                p.BackgroundTransparency = math.random(3, 7) / 10
-                p.BorderSizePixel = 0
-                p.ZIndex = 0
-                p.Parent = MainParticleLayer
-
-                local pCorner = Instance.new("UICorner")
-                pCorner.CornerRadius = UDim.new(1, 0)
-                pCorner.Parent = p
-
-                local moveTime = math.random(25, 45) / 10
-                local targetX = p.Position.X.Scale + (math.random(-10, 10) / 100)
-                local tween = TweenService:Create(p, TweenInfo.new(moveTime, Enum.EasingStyle.Linear), {
-                    Position = UDim2.new(targetX, 0, -0.05, 0),
-                    BackgroundTransparency = 1
-                })
-                tween:Play()
-                task.delay(moveTime, function() p:Destroy() end)
-            end
-        end
-    end)
-
     local MainStroke = Instance.new("UIStroke")
+    MainStroke.Name = "DynamicStroke"
     MainStroke.Color = Color3.fromRGB(38, 41, 56)
     MainStroke.Thickness = 1.5
     MainStroke.Parent = MainFrame
 
     local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 14)
+    MainCorner.CornerRadius = UDim.new(0, 16) -- Smooth Curve Fix (No sharp dabba look)
     MainCorner.Parent = MainFrame
 
     local TopBar = Instance.new("Frame")
@@ -324,6 +325,10 @@ pcall(function()
     TopBar.BorderSizePixel = 0
     TopBar.ZIndex = 2
     TopBar.Parent = MainFrame
+
+    local TopBarCorner = Instance.new("UICorner")
+    TopBarCorner.CornerRadius = UDim.new(0, 16)
+    TopBarCorner.Parent = TopBar
 
     local TopBarStroke = Instance.new("UIStroke")
     TopBarStroke.Color = Color3.fromRGB(35, 38, 52)
@@ -397,6 +402,7 @@ pcall(function()
         bCorner.Parent = btn
 
         local bStroke = Instance.new("UIStroke")
+        bStroke.Name = "TabStroke"
         bStroke.Color = Color3.fromRGB(33, 36, 48)
         bStroke.Thickness = 1
         bStroke.Parent = btn
@@ -424,7 +430,7 @@ pcall(function()
             page.Visible = true
             btn.BackgroundColor3 = Color3.fromRGB(43, 51, 77)
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            bStroke.Color = Color3.fromRGB(66, 133, 244)
+            bStroke.Color = currentThemeColor
             currentTab = tabName
         end)
 
@@ -433,7 +439,7 @@ pcall(function()
             page.Visible = true
             btn.BackgroundColor3 = Color3.fromRGB(43, 51, 77)
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            bStroke.Color = Color3.fromRGB(66, 133, 244)
+            bStroke.Color = currentThemeColor
             currentTab = tabName
         end
         return page
@@ -447,7 +453,7 @@ pcall(function()
         card.Parent = parent
 
         local cCorner = Instance.new("UICorner")
-        cCorner.CornerRadius = UDim.new(0, 8)
+        cCorner.CornerRadius = UDim.new(0, 10) -- Curved Card Fix
         cCorner.Parent = card
 
         local cStroke = Instance.new("UIStroke")
@@ -484,14 +490,13 @@ pcall(function()
 
     local function addToggleItem(parent, name, desc, defaultVal, onToggle, customInstanceName)
         local tFrame = Instance.new("Frame")
-        tFrame.Name = "Frame"
         tFrame.Size = UDim2.new(1, 0, 0, 48)
         tFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
         tFrame.ZIndex = 2
         tFrame.Parent = parent
 
         local tfC = Instance.new("UICorner")
-        tfC.CornerRadius = UDim.new(0, 8)
+        tfC.CornerRadius = UDim.new(0, 10)
         tfC.Parent = tFrame
 
         local tfS = Instance.new("UIStroke")
@@ -527,7 +532,7 @@ pcall(function()
         sw.Name = customInstanceName or "ToggleButton"
         sw.Size = UDim2.new(0, 36, 0, 18)
         sw.Position = UDim2.new(1, -44, 0.5, -9)
-        sw.BackgroundColor3 = defaultVal and Color3.fromRGB(66, 133, 244) or Color3.fromRGB(45, 51, 72)
+        sw.BackgroundColor3 = defaultVal and currentThemeColor or Color3.fromRGB(45, 51, 72)
         sw.Text = ""
         sw.AutoButtonColor = false
         sw.ZIndex = 2
@@ -552,7 +557,7 @@ pcall(function()
         sw.MouseButton1Click:Connect(function()
             state = not state
             local targetPos = state and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
-            local targetColor = state and Color3.fromRGB(66, 133, 244) or Color3.fromRGB(45, 51, 72)
+            local targetColor = state and currentThemeColor or Color3.fromRGB(45, 51, 72)
             TweenService:Create(dt, TweenInfo.new(0.2), { Position = targetPos }):Play()
             TweenService:Create(sw, TweenInfo.new(0.2), { BackgroundColor3 = targetColor }):Play()
             if onToggle then task.spawn(onToggle, state) end
@@ -560,16 +565,84 @@ pcall(function()
         return sw
     end
 
+    local function addDropdownItem(parent, name, desc, options, defaultOption, onSelect)
+        local dFrame = Instance.new("Frame")
+        dFrame.Size = UDim2.new(1, 0, 0, 48)
+        dFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        dFrame.ZIndex = 2
+        dFrame.Parent = parent
+
+        local dfC = Instance.new("UICorner")
+        dfC.CornerRadius = UDim.new(0, 10)
+        dfC.Parent = dFrame
+
+        local dfS = Instance.new("UIStroke")
+        dfS.Color = Color3.fromRGB(34, 37, 51)
+        dfS.Thickness = 1
+        dfS.Parent = dFrame
+
+        local tl = Instance.new("TextLabel")
+        tl.Size = UDim2.new(1, -110, 0, 15)
+        tl.Position = UDim2.new(0, 10, 0, 6)
+        tl.BackgroundTransparency = 1
+        tl.Text = name
+        tl.TextColor3 = Color3.fromRGB(226, 228, 237)
+        tl.TextSize = 11
+        tl.Font = Enum.Font.GothamBold
+        tl.TextXAlignment = Enum.TextXAlignment.Left
+        tl.ZIndex = 2
+        tl.Parent = dFrame
+
+        local dl = Instance.new("TextLabel")
+        dl.Size = UDim2.new(1, -110, 0, 18)
+        dl.Position = UDim2.new(0, 10, 0, 22)
+        dl.BackgroundTransparency = 1
+        dl.Text = desc
+        dl.TextColor3 = Color3.fromRGB(113, 118, 138)
+        dl.TextSize = 9
+        dl.Font = Enum.Font.Gotham
+        dl.TextXAlignment = Enum.TextXAlignment.Left
+        dl.ZIndex = 2
+        dl.Parent = dFrame
+
+        local selBtn = Instance.new("TextButton")
+        selBtn.Size = UDim2.new(0, 96, 0, 26)
+        selBtn.Position = UDim2.new(1, -102, 0.5, -13)
+        selBtn.BackgroundColor3 = Color3.fromRGB(43, 51, 77)
+        selBtn.Text = defaultOption
+        selBtn.TextColor3 = Color3.fromRGB(220, 235, 255)
+        selBtn.TextSize = 10
+        selBtn.Font = Enum.Font.GothamBold
+        selBtn.ZIndex = 2
+        selBtn.Parent = dFrame
+
+        local sbC = Instance.new("UICorner")
+        sbC.CornerRadius = UDim.new(0, 6)
+        sbC.Parent = selBtn
+
+        local idx = 1
+        for i, opt in ipairs(options) do
+            if opt == defaultOption then idx = i break end
+        end
+
+        selBtn.MouseButton1Click:Connect(function()
+            idx = idx + 1
+            if idx > #options then idx = 1 end
+            local chosen = options[idx]
+            selBtn.Text = chosen
+            if onSelect then task.spawn(onSelect, chosen) end
+        end)
+    end
+
     local function addButtonItem(parent, name, desc, onClick)
         local bFrame = Instance.new("Frame")
-        bFrame.Name = "Frame"
         bFrame.Size = UDim2.new(1, 0, 0, 48)
         bFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
         bFrame.ZIndex = 2
         bFrame.Parent = parent
 
         local bfC = Instance.new("UICorner")
-        bfC.CornerRadius = UDim.new(0, 8)
+        bfC.CornerRadius = UDim.new(0, 10)
         bfC.Parent = bFrame
 
         local bfS = Instance.new("UIStroke")
@@ -621,9 +694,48 @@ pcall(function()
         end)
     end
 
-    local ghostPage  = createTab("Ghost")
-    local visionPage = createTab("Vision")
-    local miscPage   = createTab("Misc")
+    local ghostPage   = createTab("Ghost")
+    local visionPage  = createTab("Vision")
+    local miscPage    = createTab("Misc")
+    local settingPage = createTab("Settings") -- NEW SETTINGS TAB
+
+    -- THEME COLOR & SETTINGS APPLICATION LOGIC
+    local function applyThemeColor(newColor)
+        currentThemeColor = newColor
+        pcall(function()
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+            for _, obj in pairs(ScreenGui:GetDescendants()) do
+                if obj:IsA("UIStroke") and obj.Name == "DynamicStroke" then
+                    obj.Color = newColor
+                end
+            end
+        end)
+    end
+
+    addDropdownItem(settingPage, "Theme Color", "Select hub color & particle tint", {"Blue", "White", "Orange", "Yellow", "Pink", "Red"}, "Blue", function(choice)
+        if choice == "Blue" then applyThemeColor(Color3.fromRGB(66, 133, 244))
+        elseif choice == "White" then applyThemeColor(Color3.fromRGB(255, 255, 255))
+        elseif choice == "Orange" then applyThemeColor(Color3.fromRGB(255, 140, 0))
+        elseif choice == "Yellow" then applyThemeColor(Color3.fromRGB(250, 204, 21))
+        elseif choice == "Pink" then applyThemeColor(Color3.fromRGB(244, 114, 182))
+        elseif choice == "Red" then applyThemeColor(Color3.fromRGB(255, 75, 75))
+        end
+    end)
+
+    addToggleItem(settingPage, "Background Particles", "Enable or disable global background particles", true, function(on)
+        globalParticlesEnabled = on
+    end, "ParticleToggle")
+
+    addDropdownItem(settingPage, "GUI Size", "Select menu screen size", {"Medium", "Large", "Small"}, "Medium", function(choice)
+        if choice == "Large" then
+            TweenService:Create(MainFrame, TweenInfo.new(0.25), { Size = UDim2.new(0, 520, 0, 420) }):Play()
+        elseif choice == "Medium" then
+            TweenService:Create(MainFrame, TweenInfo.new(0.25), { Size = UDim2.new(0, 460, 0, 380) }):Play()
+        elseif choice == "Small" then
+            TweenService:Create(MainFrame, TweenInfo.new(0.25), { Size = UDim2.new(0, 390, 0, 320) }):Play()
+        end
+    end)
+
     local infStaminaActive = true
     local lockedEnergyVal = nil
     local lockedBarScaleX = nil
@@ -854,7 +966,7 @@ pcall(function()
         end)
     end
 
-    -- 1. Standalone Banshee Subtitle Spy (Siren completely removed from here)
+    -- 1. Standalone Banshee Subtitle Spy
     task.spawn(function()
         local function checkSubtitleText(lbl)
             if not lbl:IsA("TextLabel") then return end
@@ -876,7 +988,7 @@ pcall(function()
         end)
     end)
 
-    -- 2. Doppelganger Fake Orb Detector (Zero-evidence map check)
+    -- 2. Doppelganger Fake Orb Detector
     task.spawn(function()
         local function verifyOrb(obj)
             local lName = string.lower(obj.Name)
@@ -893,7 +1005,7 @@ pcall(function()
         Workspace.DescendantAdded:Connect(verifyOrb)
     end)
 
-    -- 3. Demon Crucifix 360 Spin Burn, Dybbuk Corpse Yeet, Aswang Salt
+    -- 3. Demon Crucifix Spin Burn, Dybbuk Corpse Yeet, Aswang Salt
     local crossStateCache = {}
     task.spawn(function()
         local lastAswangSpeed = nil
@@ -936,7 +1048,7 @@ pcall(function()
                     end
                 end
 
-                -- Dybbuk Corpse Throw Check (Massive Velocity Yeet)
+                -- Dybbuk Corpse Throw Check
                 local ragdolls = Workspace:FindFirstChild("Ragdolls")
                 if ragdolls then
                     for _, rModel in pairs(ragdolls:GetChildren()) do
@@ -951,7 +1063,7 @@ pcall(function()
                     end
                 end
 
-                -- Aswang SaltLine Slowdown Check (Strict 30% reduction)
+                -- Aswang SaltLine Slowdown Check
                 local saltFolder = Workspace:FindFirstChild("SaltPiles") or (itemsFolder and itemsFolder:FindFirstChild("SaltPiles"))
                 if saltFolder and hrp then
                     for _, sLine in pairs(saltFolder:GetChildren()) do
@@ -1020,7 +1132,7 @@ pcall(function()
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- 2. PHANTOM TRACKER (Slow blink + speed burst)
+                    -- 2. PHANTOM TRACKER
                     if isHunting then
                         local isCurrentlyVisible = false
                         for _, p in pairs(ghost:GetChildren()) do
@@ -1050,7 +1162,7 @@ pcall(function()
                         invisibleTimer = 0
                     end
 
-                    -- 3. SIREN TRACKER (Female Only + Hunt Line-of-Sight Player Speed Drop)
+                    -- 3. SIREN TRACKER (Female Only + Line of Sight Player Speed Drop < 12)
                     if isHunting then
                         local gGender = ghost:GetAttribute("Gender")
                         if not gGender or string.lower(tostring(gGender)) == "female" then
@@ -1064,7 +1176,6 @@ pcall(function()
 
                                 if not rayResult or not rayResult.Instance then
                                     local mySpeed = myHrp.AssemblyLinearVelocity.Magnitude
-                                    -- Player sprint normally 16 studs/s, debuffed to <= 12
                                     if mySpeed > 2.0 and mySpeed <= 12.0 then
                                         updateGhostIdentity("Siren", true)
                                     end
@@ -1073,7 +1184,7 @@ pcall(function()
                         end
                     end
 
-                    -- 4. RECALIBRATED ONI / WRETCH HUNT SPRINT (Strict 34+ studs/s threshold)
+                    -- 4. RECALIBRATED ONI / WRETCH HUNT SPRINT (Strict 34+ studs/s)
                     if isHunting and speed >= 34.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
@@ -1228,7 +1339,6 @@ pcall(function()
         smartTurnOnFuseBox()
     end)
 
-    -- Dedicated Notification Silence Switch
     addToggleItem(miscPage, "Ghost Detection Notification", "Toggles popup alerts when ghost is detected", false, function(on)
         ghostNotifActive = on
     end)
@@ -1297,6 +1407,7 @@ pcall(function()
     distLbl.Font = Enum.Font.GothamBold
     distLbl.Parent = ghostBillboard
 
+    local wasHunting = false
     local lastRenderTick = 0
     RunService.RenderStepped:Connect(function()
         local now = os.clock()
