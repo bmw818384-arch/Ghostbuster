@@ -12,7 +12,7 @@ pcall(function()
         LocalPlayer = Players.LocalPlayer
     end
 
-    local ghostNotifActive = false -- Default OFF to prevent notification flooding
+    local ghostNotifActive = false
 
     local function notify(title, text, duration)
         if not ghostNotifActive and string.find(string.lower(title), "confirm") then return end
@@ -268,7 +268,7 @@ pcall(function()
     MainFrame.ClipsDescendants = false
     MainFrame.Parent = ScreenGui
 
-    -- Background Ambient Particles Behind Main Menu
+    -- Ambient Particle Layer Behind Main Menu
     local MainParticleLayer = Instance.new("Frame")
     MainParticleLayer.Name = "MainParticleLayer"
     MainParticleLayer.Size = UDim2.new(1, 60, 1, 60)
@@ -854,7 +854,7 @@ pcall(function()
         end)
     end
 
-    -- 1. Banshee & Siren Subtitle / Audio Spy
+    -- 1. Standalone Banshee Subtitle Spy (Siren completely removed from here)
     task.spawn(function()
         local function checkSubtitleText(lbl)
             if not lbl:IsA("TextLabel") then return end
@@ -863,8 +863,6 @@ pcall(function()
                     local rawText = string.lower(lbl.Text)
                     if string.find(rawText, "ghost wail") or (string.find(rawText, "wail") and not string.find(rawText, "scream")) then
                         updateGhostIdentity("Banshee", true)
-                    elseif string.find(rawText, "ghost singing") or string.find(rawText, "singing") then
-                        updateGhostIdentity("Siren", false)
                     end
                 end)
             end)
@@ -878,7 +876,7 @@ pcall(function()
         end)
     end)
 
-    -- 2. Doppelganger Fake Orb Detector
+    -- 2. Doppelganger Fake Orb Detector (Zero-evidence map check)
     task.spawn(function()
         local function verifyOrb(obj)
             local lName = string.lower(obj.Name)
@@ -978,13 +976,13 @@ pcall(function()
         local entityGhostSnaps = 0
         local vexClipTicks = 0
 
-        -- Phantom Tracker Variables
+        -- Phantom Tracker
         local invisibleTimer = 0
         local lastVisibilityState = true
         local maxSpeedWhileInvisible = 0
         local speedWhileVisible = 0
 
-        -- Revenant Tracker Variables
+        -- Revenant Tracker
         local lastHuntEndTick = 0
         local lastPlayerCount = #Players:GetPlayers()
 
@@ -995,7 +993,7 @@ pcall(function()
                 local now = os.clock()
                 local dt = now - lastCheckTick
 
-                -- 1. REVENANT TRACKER (Kill-Stop & Ultra Short Cooldown)
+                -- 1. REVENANT TRACKER
                 local currentPlayers = 0
                 for _, p in pairs(Players:GetPlayers()) do
                     if p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
@@ -1005,7 +1003,7 @@ pcall(function()
 
                 if wasHunting and not isHunting then
                     if currentPlayers < lastPlayerCount then
-                        updateGhostIdentity("Revenant", false) -- Hunt stopped immediately on kill
+                        updateGhostIdentity("Revenant", false)
                     end
                     lastHuntEndTick = now
                 end
@@ -1013,7 +1011,7 @@ pcall(function()
                 if isHunting and not wasHunting then
                     local cooldown = now - lastHuntEndTick
                     if lastHuntEndTick > 0 and cooldown <= 18.0 then
-                        updateGhostIdentity("Revenant", true) -- Re-hunt within 18s!
+                        updateGhostIdentity("Revenant", true)
                     end
                 end
                 lastPlayerCount = currentPlayers
@@ -1022,7 +1020,7 @@ pcall(function()
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- 2. PHANTOM TRACKER (Long Invisibility Blink + Invisibility Speed Burst)
+                    -- 2. PHANTOM TRACKER (Slow blink + speed burst)
                     if isHunting then
                         local isCurrentlyVisible = false
                         for _, p in pairs(ghost:GetChildren()) do
@@ -1038,7 +1036,7 @@ pcall(function()
                         else
                             if not lastVisibilityState then
                                 speedWhileVisible = speed
-                                if invisibleTimer >= 1.1 and (maxSpeedWhileInvisible >= 24.0 or (maxSpeedWhileInvisible - speedWhileVisible >= 5.0)) then
+                                if invisibleTimer >= 1.1 and (maxSpeedWhileInvisible >= 31.0 or (maxSpeedWhileInvisible - speedWhileVisible >= 6.0)) then
                                     updateGhostIdentity("Phantom", true)
                                 elseif invisibleTimer >= 0.9 then
                                     updateGhostIdentity("Phantom", false)
@@ -1052,8 +1050,31 @@ pcall(function()
                         invisibleTimer = 0
                     end
 
-                    -- 3. ONI / WRETCH HUNT SPRINT (Strict 31+ studs/s threshold)
-                    if isHunting and speed >= 31.0 then
+                    -- 3. SIREN TRACKER (Female Only + Hunt Line-of-Sight Player Speed Drop)
+                    if isHunting then
+                        local gGender = ghost:GetAttribute("Gender")
+                        if not gGender or string.lower(tostring(gGender)) == "female" then
+                            local myChar = LocalPlayer.Character
+                            local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                            if myHrp and (myHrp.Position - curPos).Magnitude <= 45.0 then
+                                local rayParams = RaycastParams.new()
+                                rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                                rayParams.FilterDescendantsInstances = {ghost, myChar}
+                                local rayResult = Workspace:Raycast(curPos, (myHrp.Position - curPos), rayParams)
+
+                                if not rayResult or not rayResult.Instance then
+                                    local mySpeed = myHrp.AssemblyLinearVelocity.Magnitude
+                                    -- Player sprint normally 16 studs/s, debuffed to <= 12
+                                    if mySpeed > 2.0 and mySpeed <= 12.0 then
+                                        updateGhostIdentity("Siren", true)
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    -- 4. RECALIBRATED ONI / WRETCH HUNT SPRINT (Strict 34+ studs/s threshold)
+                    if isHunting and speed >= 34.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
                             local ch = p.Character
@@ -1070,11 +1091,11 @@ pcall(function()
                         else
                             updateGhostIdentity("Oni", true)
                         end
-                    elseif isHunting and speed >= 26.0 then
+                    elseif isHunting and speed >= 31.0 then
                         updateGhostIdentity("Oni", false)
                     end
 
-                    -- 4. ENTITY TELEPORTATION JUMP
+                    -- 5. ENTITY TELEPORTATION JUMP
                     if lastGhostPos and dt > 0 and dt < 0.35 then
                         local dist = (curPos - lastGhostPos).Magnitude
                         if dist > 18.0 and speed < 8.0 then
@@ -1087,7 +1108,7 @@ pcall(function()
                         end
                     end
 
-                    -- 5. VEX WALL NOCLIP CHECK
+                    -- 6. VEX WALL NOCLIP CHECK
                     if lastGhostPos and (curPos - lastGhostPos).Magnitude > 3.0 then
                         local moveDir = (curPos - lastGhostPos)
                         local rayParams = RaycastParams.new()
@@ -1357,7 +1378,7 @@ pcall(function()
                             SpeedValue.Text = "Speed=(0.00) [Stationary / Manifest]"
                             SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
                         elseif isHunting then
-                            if liveSpeed >= 31.0 then
+                            if liveSpeed >= 34.0 then
                                 SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ONI SPRINT BURST]"
                                 SpeedValue.TextColor3 = Color3.fromRGB(255, 0, 0)
                             elseif liveSpeed >= 20.0 then
