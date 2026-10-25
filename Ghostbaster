@@ -62,15 +62,15 @@ pcall(function()
     LoadBg.BorderSizePixel = 0
     LoadBg.Parent = LoadGui
 
-    local ParticleContainer = Instance.new("Frame")
-    ParticleContainer.Size = UDim2.new(1, 0, 1, 0)
-    ParticleContainer.BackgroundTransparency = 1
-    ParticleContainer.ClipsDescendants = false
-    ParticleContainer.Parent = LoadBg
+    local LoadParticleContainer = Instance.new("Frame")
+    LoadParticleContainer.Size = UDim2.new(1, 0, 1, 0)
+    LoadParticleContainer.BackgroundTransparency = 1
+    LoadParticleContainer.ClipsDescendants = false
+    LoadParticleContainer.Parent = LoadBg
 
-    local isSpawningParticles = true
+    local isSpawningLoadParticles = true
     task.spawn(function()
-        while isSpawningParticles do
+        while isSpawningLoadParticles do
             task.wait(math.random(6, 15) / 100)
             local p = Instance.new("Frame")
             local pSize = math.random(3, 7)
@@ -79,7 +79,7 @@ pcall(function()
             p.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
             p.BackgroundTransparency = math.random(2, 6) / 10
             p.BorderSizePixel = 0
-            p.Parent = ParticleContainer
+            p.Parent = LoadParticleContainer
 
             local pCorner = Instance.new("UICorner")
             pCorner.CornerRadius = UDim.new(1, 0)
@@ -265,8 +265,48 @@ pcall(function()
     MainFrame.Position = UDim2.new(0.5, -230, 0.5, -190)
     MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 24)
     MainFrame.BorderSizePixel = 0
-    MainFrame.ClipsDescendants = true
+    MainFrame.ClipsDescendants = false
     MainFrame.Parent = ScreenGui
+
+    -- Background Ambient Particles Behind Main Menu
+    local MainParticleLayer = Instance.new("Frame")
+    MainParticleLayer.Name = "MainParticleLayer"
+    MainParticleLayer.Size = UDim2.new(1, 60, 1, 60)
+    MainParticleLayer.Position = UDim2.new(0, -30, 0, -30)
+    MainParticleLayer.BackgroundTransparency = 1
+    MainParticleLayer.ZIndex = 0
+    MainParticleLayer.Parent = MainFrame
+
+    local isSpawningMainParticles = true
+    task.spawn(function()
+        while isSpawningMainParticles do
+            task.wait(math.random(15, 30) / 100)
+            if MainFrame.Visible and ScreenGui.Enabled then
+                local p = Instance.new("Frame")
+                local pSize = math.random(3, 6)
+                p.Size = UDim2.new(0, pSize, 0, pSize)
+                p.Position = UDim2.new(math.random(5, 95) / 100, 0, 1.0, 0)
+                p.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+                p.BackgroundTransparency = math.random(3, 7) / 10
+                p.BorderSizePixel = 0
+                p.ZIndex = 0
+                p.Parent = MainParticleLayer
+
+                local pCorner = Instance.new("UICorner")
+                pCorner.CornerRadius = UDim.new(1, 0)
+                pCorner.Parent = p
+
+                local moveTime = math.random(25, 45) / 10
+                local targetX = p.Position.X.Scale + (math.random(-10, 10) / 100)
+                local tween = TweenService:Create(p, TweenInfo.new(moveTime, Enum.EasingStyle.Linear), {
+                    Position = UDim2.new(targetX, 0, -0.05, 0),
+                    BackgroundTransparency = 1
+                })
+                tween:Play()
+                task.delay(moveTime, function() p:Destroy() end)
+            end
+        end
+    end)
 
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Color = Color3.fromRGB(38, 41, 56)
@@ -282,6 +322,7 @@ pcall(function()
     TopBar.Size = UDim2.new(1, 0, 0, 42)
     TopBar.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
     TopBar.BorderSizePixel = 0
+    TopBar.ZIndex = 2
     TopBar.Parent = MainFrame
 
     local TopBarStroke = Instance.new("UIStroke")
@@ -298,6 +339,7 @@ pcall(function()
     TitleLabel.TextSize = 14
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.ZIndex = 2
     TitleLabel.Parent = TopBar
 
     makeDraggable(MainFrame, TopBar)
@@ -317,6 +359,7 @@ pcall(function()
     TabBar.Position = UDim2.new(0, 0, 0, 42)
     TabBar.BackgroundColor3 = Color3.fromRGB(13, 14, 18)
     TabBar.BorderSizePixel = 0
+    TabBar.ZIndex = 2
     TabBar.Parent = MainFrame
 
     local TabListLayout = Instance.new("UIListLayout")
@@ -332,6 +375,7 @@ pcall(function()
     ContentArea.Size = UDim2.new(1, -95, 1, -42)
     ContentArea.Position = UDim2.new(0, 95, 0, 42)
     ContentArea.BackgroundTransparency = 1
+    ContentArea.ZIndex = 2
     ContentArea.Parent = MainFrame
 
     local tabs = {}
@@ -345,6 +389,7 @@ pcall(function()
         btn.TextColor3 = Color3.fromRGB(144, 148, 168)
         btn.TextSize = 11
         btn.Font = Enum.Font.GothamMedium
+        btn.ZIndex = 2
         btn.Parent = TabBar
 
         local bCorner = Instance.new("UICorner")
@@ -362,6 +407,7 @@ pcall(function()
         page.BackgroundTransparency = 1
         page.ScrollBarThickness = 2
         page.Visible = false
+        page.ZIndex = 2
         page.Parent = ContentArea
 
         local pageList = Instance.new("UIListLayout")
@@ -397,6 +443,7 @@ pcall(function()
         local card = Instance.new("Frame")
         card.Size = UDim2.new(1, 0, 0, 46)
         card.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        card.ZIndex = 2
         card.Parent = parent
 
         local cCorner = Instance.new("UICorner")
@@ -417,6 +464,7 @@ pcall(function()
         tLabel.TextSize = 9.5
         tLabel.Font = Enum.Font.GothamMedium
         tLabel.TextXAlignment = Enum.TextXAlignment.Left
+        tLabel.ZIndex = 2
         tLabel.Parent = card
 
         local vLabel = Instance.new("TextLabel")
@@ -428,6 +476,7 @@ pcall(function()
         vLabel.TextSize = 11.5
         vLabel.Font = Enum.Font.GothamBold
         vLabel.TextXAlignment = Enum.TextXAlignment.Left
+        vLabel.ZIndex = 2
         vLabel.Parent = card
 
         return vLabel
@@ -438,6 +487,7 @@ pcall(function()
         tFrame.Name = "Frame"
         tFrame.Size = UDim2.new(1, 0, 0, 48)
         tFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        tFrame.ZIndex = 2
         tFrame.Parent = parent
 
         local tfC = Instance.new("UICorner")
@@ -458,6 +508,7 @@ pcall(function()
         tl.TextSize = 11
         tl.Font = Enum.Font.GothamBold
         tl.TextXAlignment = Enum.TextXAlignment.Left
+        tl.ZIndex = 2
         tl.Parent = tFrame
 
         local dl = Instance.new("TextLabel")
@@ -469,6 +520,7 @@ pcall(function()
         dl.TextSize = 9
         dl.Font = Enum.Font.Gotham
         dl.TextXAlignment = Enum.TextXAlignment.Left
+        dl.ZIndex = 2
         dl.Parent = tFrame
 
         local sw = Instance.new("TextButton")
@@ -478,6 +530,7 @@ pcall(function()
         sw.BackgroundColor3 = defaultVal and Color3.fromRGB(66, 133, 244) or Color3.fromRGB(45, 51, 72)
         sw.Text = ""
         sw.AutoButtonColor = false
+        sw.ZIndex = 2
         sw.Parent = tFrame
 
         local sc = Instance.new("UICorner")
@@ -488,6 +541,7 @@ pcall(function()
         dt.Size = UDim2.new(0, 12, 0, 12)
         dt.Position = defaultVal and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
         dt.BackgroundColor3 = Color3.fromRGB(240, 243, 255)
+        dt.ZIndex = 2
         dt.Parent = sw
 
         local dc = Instance.new("UICorner")
@@ -511,6 +565,7 @@ pcall(function()
         bFrame.Name = "Frame"
         bFrame.Size = UDim2.new(1, 0, 0, 48)
         bFrame.BackgroundColor3 = Color3.fromRGB(24, 26, 36)
+        bFrame.ZIndex = 2
         bFrame.Parent = parent
 
         local bfC = Instance.new("UICorner")
@@ -531,6 +586,7 @@ pcall(function()
         tl.TextSize = 11
         tl.Font = Enum.Font.GothamBold
         tl.TextXAlignment = Enum.TextXAlignment.Left
+        tl.ZIndex = 2
         tl.Parent = bFrame
 
         local dl = Instance.new("TextLabel")
@@ -542,6 +598,7 @@ pcall(function()
         dl.TextSize = 9
         dl.Font = Enum.Font.Gotham
         dl.TextXAlignment = Enum.TextXAlignment.Left
+        dl.ZIndex = 2
         dl.Parent = bFrame
 
         local actBtn = Instance.new("TextButton")
@@ -552,6 +609,7 @@ pcall(function()
         actBtn.TextColor3 = Color3.fromRGB(220, 235, 255)
         actBtn.TextSize = 10.5
         actBtn.Font = Enum.Font.GothamBold
+        actBtn.ZIndex = 2
         actBtn.Parent = bFrame
 
         local acCorner = Instance.new("UICorner")
@@ -837,49 +895,7 @@ pcall(function()
         Workspace.DescendantAdded:Connect(verifyOrb)
     end)
 
-    -- 3. Solid Dump Lock (No False Generic Bones/Heads)
-    task.spawn(function()
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                local ghost = getLiveGhost()
-                if ghost and isInsideHouse(ghost:GetPivot().Position) then
-                    -- A. UMBRA: No Footsteps Script + Real Beam Aura
-                    local hasFootsteps = ghost:FindFirstChild("GhostFootsteps", true)
-                    local hasBeam = ghost:FindFirstChildWhichIsA("Beam", true)
-                    if not hasFootsteps and hasBeam then
-                        updateGhostIdentity("Umbra", true)
-                    end
-
-                    -- B. DEMON: GreenPoison or Crucifix
-                    local greenPoison = ghost:FindFirstChild("GreenPoison", true)
-                    local necklacePart = ghost:FindFirstChild("Necklace1", true) or ghost:FindFirstChild("Necklace2", true)
-                    if greenPoison and necklacePart then
-                        updateGhostIdentity("Demon", true)
-                    elseif greenPoison or necklacePart then
-                        updateGhostIdentity("Demon", false)
-                    end
-
-                    -- C. ENTITY: Fire Emitter + FireLight
-                    local fireEmitter = ghost:FindFirstChild("Fire", true)
-                    local fireLight = ghost:FindFirstChild("FireLight", true)
-                    if fireEmitter and fireLight then
-                        updateGhostIdentity("Entity", true)
-                    elseif fireEmitter then
-                        updateGhostIdentity("Entity", false)
-                    end
-
-                    -- D. VEX: Cat Magnifying Glass BillboardGui
-                    local catGui = ghost:FindFirstChild("Cat", true)
-                    if catGui and catGui:IsA("BillboardGui") then
-                        updateGhostIdentity("Vex", true)
-                    end
-                end
-            end)
-            task.wait(0.6)
-        end
-    end)
-
-    -- 4. Demon Crucifix, Dybbuk Launch & Aswang Salt Step
+    -- 3. Demon Crucifix 360 Spin Burn, Dybbuk Corpse Yeet, Aswang Salt
     local crossStateCache = {}
     task.spawn(function()
         local lastAswangSpeed = nil
@@ -922,7 +938,7 @@ pcall(function()
                     end
                 end
 
-                -- Dybbuk Corpse Throw Check (Massive Yeet Only)
+                -- Dybbuk Corpse Throw Check (Massive Velocity Yeet)
                 local ragdolls = Workspace:FindFirstChild("Ragdolls")
                 if ragdolls then
                     for _, rModel in pairs(ragdolls:GetChildren()) do
@@ -937,7 +953,7 @@ pcall(function()
                     end
                 end
 
-                -- Aswang SaltLine Slowdown Check
+                -- Aswang SaltLine Slowdown Check (Strict 30% reduction)
                 local saltFolder = Workspace:FindFirstChild("SaltPiles") or (itemsFolder and itemsFolder:FindFirstChild("SaltPiles"))
                 if saltFolder and hrp then
                     for _, sLine in pairs(saltFolder:GetChildren()) do
@@ -962,6 +978,16 @@ pcall(function()
         local entityGhostSnaps = 0
         local vexClipTicks = 0
 
+        -- Phantom Tracker Variables
+        local invisibleTimer = 0
+        local lastVisibilityState = true
+        local maxSpeedWhileInvisible = 0
+        local speedWhileVisible = 0
+
+        -- Revenant Tracker Variables
+        local lastHuntEndTick = 0
+        local lastPlayerCount = #Players:GetPlayers()
+
         while ScreenGui and ScreenGui.Parent do
             pcall(function()
                 local ghost = getLiveGhost()
@@ -969,11 +995,64 @@ pcall(function()
                 local now = os.clock()
                 local dt = now - lastCheckTick
 
+                -- 1. REVENANT TRACKER (Kill-Stop & Ultra Short Cooldown)
+                local currentPlayers = 0
+                for _, p in pairs(Players:GetPlayers()) do
+                    if p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+                        currentPlayers = currentPlayers + 1
+                    end
+                end
+
+                if wasHunting and not isHunting then
+                    if currentPlayers < lastPlayerCount then
+                        updateGhostIdentity("Revenant", false) -- Hunt stopped immediately on kill
+                    end
+                    lastHuntEndTick = now
+                end
+
+                if isHunting and not wasHunting then
+                    local cooldown = now - lastHuntEndTick
+                    if lastHuntEndTick > 0 and cooldown <= 18.0 then
+                        updateGhostIdentity("Revenant", true) -- Re-hunt within 18s!
+                    end
+                end
+                lastPlayerCount = currentPlayers
+
                 if ghost and hrp and isInsideHouse(hrp.Position) then
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- A. ONI / WRETCH HUNT SPRINT (Strict 31+ studs/s threshold)
+                    -- 2. PHANTOM TRACKER (Long Invisibility Blink + Invisibility Speed Burst)
+                    if isHunting then
+                        local isCurrentlyVisible = false
+                        for _, p in pairs(ghost:GetChildren()) do
+                            if (p:IsA("BasePart") or p:IsA("MeshPart")) and p.Transparency < 0.75 then
+                                isCurrentlyVisible = true
+                                break
+                            end
+                        end
+
+                        if not isCurrentlyVisible then
+                            invisibleTimer = invisibleTimer + dt
+                            maxSpeedWhileInvisible = math.max(maxSpeedWhileInvisible, speed)
+                        else
+                            if not lastVisibilityState then
+                                speedWhileVisible = speed
+                                if invisibleTimer >= 1.1 and (maxSpeedWhileInvisible >= 24.0 or (maxSpeedWhileInvisible - speedWhileVisible >= 5.0)) then
+                                    updateGhostIdentity("Phantom", true)
+                                elseif invisibleTimer >= 0.9 then
+                                    updateGhostIdentity("Phantom", false)
+                                end
+                                invisibleTimer = 0
+                                maxSpeedWhileInvisible = 0
+                            end
+                        end
+                        lastVisibilityState = isCurrentlyVisible
+                    else
+                        invisibleTimer = 0
+                    end
+
+                    -- 3. ONI / WRETCH HUNT SPRINT (Strict 31+ studs/s threshold)
                     if isHunting and speed >= 31.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
@@ -995,7 +1074,7 @@ pcall(function()
                         updateGhostIdentity("Oni", false)
                     end
 
-                    -- B. ENTITY TELEPORTATION JUMP
+                    -- 4. ENTITY TELEPORTATION JUMP
                     if lastGhostPos and dt > 0 and dt < 0.35 then
                         local dist = (curPos - lastGhostPos).Magnitude
                         if dist > 18.0 and speed < 8.0 then
@@ -1008,7 +1087,7 @@ pcall(function()
                         end
                     end
 
-                    -- C. VEX WALL NOCLIP CHECK
+                    -- 5. VEX WALL NOCLIP CHECK
                     if lastGhostPos and (curPos - lastGhostPos).Magnitude > 3.0 then
                         local moveDir = (curPos - lastGhostPos)
                         local rayParams = RaycastParams.new()
@@ -1128,7 +1207,7 @@ pcall(function()
         smartTurnOnFuseBox()
     end)
 
-    -- NEW NOTIFICATION TOGGLE: Silence spam on demand
+    -- Dedicated Notification Silence Switch
     addToggleItem(miscPage, "Ghost Detection Notification", "Toggles popup alerts when ghost is detected", false, function(on)
         ghostNotifActive = on
     end)
@@ -1197,7 +1276,6 @@ pcall(function()
     distLbl.Font = Enum.Font.GothamBold
     distLbl.Parent = ghostBillboard
 
-    local wasHunting = false
     local lastRenderTick = 0
     RunService.RenderStepped:Connect(function()
         local now = os.clock()
@@ -1553,7 +1631,7 @@ pcall(function()
         }):Play()
         task.wait(0.7)
 
-        isSpawningParticles = false
+        isSpawningLoadParticles = false
         TweenService:Create(LoadBg, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
         TweenService:Create(LoadBox, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
         TweenService:Create(LoadTitle, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
