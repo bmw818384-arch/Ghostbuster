@@ -261,7 +261,7 @@ pcall(function()
     TBCorner.CornerRadius = UDim.new(0, 14)
     TBCorner.Parent = ToggleButton
 
-    -- GLOBAL GAME BACKGROUND PARTICLES (Game screen background when GUI open)
+    -- GLOBAL GAME BACKGROUND PARTICLES
     local GameParticleLayer = Instance.new("Folder")
     GameParticleLayer.Name = "GameParticleLayer"
     GameParticleLayer.Parent = ScreenGui
@@ -301,11 +301,11 @@ pcall(function()
 
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "Frame"
-    MainFrame.Size = UDim2.new(0, 460, 0, 380) -- Medium Default Size
+    MainFrame.Size = UDim2.new(0, 460, 0, 380)
     MainFrame.Position = UDim2.new(0.5, -230, 0.5, -190)
     MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 24)
     MainFrame.BorderSizePixel = 0
-    MainFrame.ClipsDescendants = false
+    MainFrame.ClipsDescendants = false -- FIXED: Prevents bottom corner clipping
     MainFrame.Parent = ScreenGui
 
     local MainStroke = Instance.new("UIStroke")
@@ -315,7 +315,7 @@ pcall(function()
     MainStroke.Parent = MainFrame
 
     local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 16) -- Smooth Curve Fix (No sharp dabba look)
+    MainCorner.CornerRadius = UDim.new(0, 16) -- FIXED: Consistent smooth curved corners
     MainCorner.Parent = MainFrame
 
     local TopBar = Instance.new("Frame")
@@ -453,7 +453,7 @@ pcall(function()
         card.Parent = parent
 
         local cCorner = Instance.new("UICorner")
-        cCorner.CornerRadius = UDim.new(0, 10) -- Curved Card Fix
+        cCorner.CornerRadius = UDim.new(0, 10)
         cCorner.Parent = card
 
         local cStroke = Instance.new("UIStroke")
@@ -697,9 +697,8 @@ pcall(function()
     local ghostPage   = createTab("Ghost")
     local visionPage  = createTab("Vision")
     local miscPage    = createTab("Misc")
-    local settingPage = createTab("Settings") -- NEW SETTINGS TAB
+    local settingPage = createTab("Settings")
 
-    -- THEME COLOR & SETTINGS APPLICATION LOGIC
     local function applyThemeColor(newColor)
         currentThemeColor = newColor
         pcall(function()
@@ -966,15 +965,17 @@ pcall(function()
         end)
     end
 
-    -- 1. Standalone Banshee Subtitle Spy
+    -- 1. Standalone Banshee Subtitle Spy (Updated with new SOUND tag compatibility)[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)
     task.spawn(function()
         local function checkSubtitleText(lbl)
             if not lbl:IsA("TextLabel") then return end
             lbl:GetPropertyChangedSignal("Text"):Connect(function()
                 pcall(function()
                     local rawText = string.lower(lbl.Text)
-                    if string.find(rawText, "ghost wail") or (string.find(rawText, "wail") and not string.find(rawText, "scream")) then
-                        updateGhostIdentity("Banshee", true)
+                    if string.find(rawText, "ghost wail") or string.find(rawText, "wail") or string.find(rawText, "sound") then
+                        if string.find(rawText, "wail") then
+                            updateGhostIdentity("Banshee", true)
+                        end
                     end
                 end)
             end)
