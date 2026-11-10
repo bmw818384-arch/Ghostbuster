@@ -63,40 +63,6 @@ pcall(function()
     LoadBg.BorderSizePixel = 0
     LoadBg.Parent = LoadGui
 
-    local LoadParticleContainer = Instance.new("Frame")
-    LoadParticleContainer.Size = UDim2.new(1, 0, 1, 0)
-    LoadParticleContainer.BackgroundTransparency = 1
-    LoadParticleContainer.ClipsDescendants = false
-    LoadParticleContainer.Parent = LoadBg
-
-    local isSpawningLoadParticles = true
-    task.spawn(function()
-        while isSpawningLoadParticles do
-            task.wait(math.random(6, 15) / 100)
-            local p = Instance.new("Frame")
-            local pSize = math.random(3, 7)
-            p.Size = UDim2.new(0, pSize, 0, pSize)
-            p.Position = UDim2.new(math.random(5, 95) / 100, 0, 1.05, 0)
-            p.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-            p.BackgroundTransparency = math.random(2, 6) / 10
-            p.BorderSizePixel = 0
-            p.Parent = LoadParticleContainer
-
-            local pCorner = Instance.new("UICorner")
-            pCorner.CornerRadius = UDim.new(1, 0)
-            pCorner.Parent = p
-
-            local moveTime = math.random(25, 45) / 10
-            local targetX = p.Position.X.Scale + (math.random(-10, 10) / 100)
-            local tween = TweenService:Create(p, TweenInfo.new(moveTime, Enum.EasingStyle.Linear), {
-                Position = UDim2.new(targetX, 0, -0.1, 0),
-                BackgroundTransparency = 1
-            })
-            tween:Play()
-            task.delay(moveTime, function() p:Destroy() end)
-        end
-    end)
-
     local LoadBox = Instance.new("Frame")
     LoadBox.Size = UDim2.new(0, 340, 0, 220)
     LoadBox.Position = UDim2.new(0.5, -170, 0.5, -110)
@@ -112,7 +78,6 @@ pcall(function()
     local LoadBoxStroke = Instance.new("UIStroke")
     LoadBoxStroke.Color = Color3.fromRGB(66, 133, 244)
     LoadBoxStroke.Thickness = 1.6
-    LoadBoxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     LoadBoxStroke.Parent = LoadBox
 
     local LoadTitle = Instance.new("TextLabel")
@@ -124,22 +89,6 @@ pcall(function()
     LoadTitle.TextSize = 15
     LoadTitle.Font = Enum.Font.GothamBold
     LoadTitle.Parent = LoadBox
-
-    local LoadLogo = Instance.new("ImageLabel")
-    LoadLogo.Size = UDim2.new(0, 56, 0, 56)
-    LoadLogo.Position = UDim2.new(0.5, -28, 0, 44)
-    LoadLogo.BackgroundColor3 = Color3.fromRGB(24, 28, 42)
-    LoadLogo.Image = "rbxassetid://129691744093416"
-    LoadLogo.Parent = LoadBox
-
-    local LoadLogoCorner = Instance.new("UICorner")
-    LoadLogoCorner.CornerRadius = UDim.new(0, 14)
-    LoadLogoCorner.Parent = LoadLogo
-
-    local LoadLogoStroke = Instance.new("UIStroke")
-    LoadLogoStroke.Color = Color3.fromRGB(80, 150, 255)
-    LoadLogoStroke.Thickness = 1.4
-    LoadLogoStroke.Parent = LoadLogo
 
     local LoadSubText = Instance.new("TextLabel")
     LoadSubText.Size = UDim2.new(1, 0, 0, 20)
@@ -176,7 +125,7 @@ pcall(function()
     LoadPhaseText.Size = UDim2.new(1, 0, 0, 18)
     LoadPhaseText.Position = UDim2.new(0, 0, 0, 154)
     LoadPhaseText.BackgroundTransparency = 1
-    LoadPhaseText.Text = "Phase 1: Initializing Workspace & Memory..."
+    LoadPhaseText.Text = "Phase 3: Ready... Track and Fill"
     LoadPhaseText.TextColor3 = Color3.fromRGB(113, 118, 138)
     LoadPhaseText.TextSize = 11
     LoadPhaseText.Font = Enum.Font.Gotham
@@ -261,7 +210,7 @@ pcall(function()
     TBCorner.CornerRadius = UDim.new(0, 14)
     TBCorner.Parent = ToggleButton
 
-    -- GLOBAL GAME BACKGROUND PARTICLES
+    -- BACKGROUND PARTICLES (Spawns ONLY when GUI is open!)
     local GameParticleLayer = Instance.new("Folder")
     GameParticleLayer.Name = "GameParticleLayer"
     GameParticleLayer.Parent = ScreenGui
@@ -305,7 +254,7 @@ pcall(function()
     MainFrame.Position = UDim2.new(0.5, -230, 0.5, -190)
     MainFrame.BackgroundColor3 = Color3.fromRGB(16, 17, 24)
     MainFrame.BorderSizePixel = 0
-    MainFrame.ClipsDescendants = false -- FIXED: Prevents bottom corner clipping
+    MainFrame.ClipsDescendants = false
     MainFrame.Parent = ScreenGui
 
     local MainStroke = Instance.new("UIStroke")
@@ -315,7 +264,7 @@ pcall(function()
     MainStroke.Parent = MainFrame
 
     local MainCorner = Instance.new("UICorner")
-    MainCorner.CornerRadius = UDim.new(0, 16) -- FIXED: Consistent smooth curved corners
+    MainCorner.CornerRadius = UDim.new(0, 16)
     MainCorner.Parent = MainFrame
 
     local TopBar = Instance.new("Frame")
@@ -359,7 +308,7 @@ pcall(function()
         }):Play()
     end)
 
-    local TabBar = Instance.new("Frame")
+local TabBar = Instance.new("Frame")
     TabBar.Size = UDim2.new(0, 95, 1, -42)
     TabBar.Position = UDim2.new(0, 0, 0, 42)
     TabBar.BackgroundColor3 = Color3.fromRGB(13, 14, 18)
@@ -965,7 +914,6 @@ pcall(function()
         end)
     end
 
-    -- 1. Standalone Banshee Subtitle Spy (Updated with new SOUND tag compatibility)[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)
     task.spawn(function()
         local function checkSubtitleText(lbl)
             if not lbl:IsA("TextLabel") then return end
@@ -989,7 +937,7 @@ pcall(function()
         end)
     end)
 
-    -- 2. Doppelganger Fake Orb Detector
+    -- Doppelganger Fake Orb Detector
     task.spawn(function()
         local function verifyOrb(obj)
             local lName = string.lower(obj.Name)
@@ -1006,7 +954,7 @@ pcall(function()
         Workspace.DescendantAdded:Connect(verifyOrb)
     end)
 
-    -- 3. Demon Crucifix Spin Burn, Dybbuk Corpse Yeet, Aswang Salt
+    -- Spirit, Wisp, Wraith, Shadow, Demon, Dybbuk & Aswang Behavioral Spy
     local crossStateCache = {}
     task.spawn(function()
         local lastAswangSpeed = nil
@@ -1016,34 +964,62 @@ pcall(function()
                 local hrp = ghost and ghost:FindFirstChild("HumanoidRootPart")
                 local curSpeed = hrp and hrp.AssemblyLinearVelocity.Magnitude or 0
 
-                -- Demon Crucifix Levitation + 360 Spin Burn
+                -- 1. Spirit & Wisp & Wraith & Shadow Check via Environment & Items
                 if itemsFolder then
                     for _, itm in pairs(itemsFolder:GetChildren()) do
                         local nameL = string.lower(itm.Name)
-                        local isCross = string.find(nameL, "cross") or string.find(nameL, "crucifix") or itm:FindFirstChild("Tie") or itm:FindFirstChild("Plank Horizontal")
+                        
+                        -- Spirit / Wisp Holy Oil Blue Flame & Fire Check
+                        if string.find(nameL, "oil") or string.find(nameL, "salt") then
+                            local lightPart = itm:FindFirstChild("Light") or itm:FindFirstChildWhichIsA("BasePart")
+                            if lightPart then
+                                local col = lightPart.Color
+                                -- Check if Spirit turned flame Blue
+                                if col.B > col.R and col.B > col.G then
+                                    updateGhostIdentity("Spirit", true)
+                                end
+                            end
+                        end
+
+                        -- Wisp Fire Walking Check
+                        if ghost and hrp then
+                            local flames = ghost:FindFirstChild("Flames", true) or ghost:FindFirstChild("Fire", true)
+                            if flames and flames.Enabled then
+                                updateGhostIdentity("The Wisp", true)
+                            end
+                        end
+
+                        -- Demon Crucifix Spin Burn Check
+                        local isCross = string.find(nameL, "cross") or string.find(nameL, "crucifix")
                         if isCross then
                             local handle = itm:FindFirstChild("Handle") or itm:FindFirstChildWhichIsA("BasePart")
                             if handle and isInsideHouse(handle.Position) then
                                 local cache = crossStateCache[itm]
                                 if not cache then
-                                    crossStateCache[itm] = {
-                                        baseY = handle.Position.Y,
-                                        lastCFrame = handle.CFrame
-                                    }
+                                    crossStateCache[itm] = { baseY = handle.Position.Y }
                                 else
                                     local flamesEmitter = itm:FindFirstChild("Flames", true)
-                                    local isBurning = flamesEmitter and flamesEmitter:IsA("ParticleEmitter") and flamesEmitter.Enabled
-
-                                    if isBurning then
+                                    if flamesEmitter and flamesEmitter:IsA("ParticleEmitter") and flamesEmitter.Enabled then
                                         local yLift = handle.Position.Y - cache.baseY
-                                        local isFloating = yLift > 0.6 or handle.AssemblyLinearVelocity.Y > 0.3
-                                        local isSpinning = handle.AssemblyAngularVelocity.Magnitude > 1.2
-                                        if isFloating and isSpinning then
+                                        if yLift > 0.6 and handle.AssemblyAngularVelocity.Magnitude > 1.2 then
                                             updateGhostIdentity("Demon", true)
                                         end
                                     end
-                                    cache.lastCFrame = handle.CFrame
                                 end
+                            end
+                        end
+                    end
+                end
+
+                -- Wraith Zero Footprint on Salt Check
+                local saltFolder = Workspace:FindFirstChild("SaltPiles") or (itemsFolder and itemsFolder:FindFirstChild("SaltPiles"))
+                if saltFolder and hrp then
+                    for _, sLine in pairs(saltFolder:GetChildren()) do
+                        local sCenter = sLine:FindFirstChild("Center") or sLine:FindFirstChildWhichIsA("BasePart")
+                        if sCenter and (sCenter.Position - hrp.Position).Magnitude <= 4.0 then
+                            -- If ghost crossed salt but no footprint/disturbance attribute changed
+                            if not sLine:GetAttribute("Disturbed") and curSpeed > 2.0 then
+                                updateGhostIdentity("Wraith", true)
                             end
                         end
                     end
@@ -1053,7 +1029,7 @@ pcall(function()
                 local ragdolls = Workspace:FindFirstChild("Ragdolls")
                 if ragdolls then
                     for _, rModel in pairs(ragdolls:GetChildren()) do
-                        local mainBodyPart = rModel:FindFirstChild("HumanoidRootPart") or rModel:FindFirstChild("Torso") or rModel:FindFirstChild("UpperTorso")
+                        local mainBodyPart = rModel:FindFirstChild("HumanoidRootPart") or rModel:FindFirstChild("Torso")
                         if mainBodyPart and mainBodyPart:IsA("BasePart") then
                             local bodyVel = mainBodyPart.AssemblyLinearVelocity
                             if bodyVel.Magnitude > 35.0 and math.abs(bodyVel.Y) > 10.0 then
@@ -1064,11 +1040,10 @@ pcall(function()
                     end
                 end
 
-                -- Aswang SaltLine Slowdown Check
-                local saltFolder = Workspace:FindFirstChild("SaltPiles") or (itemsFolder and itemsFolder:FindFirstChild("SaltPiles"))
+                -- Aswang Salt Slowdown Check
                 if saltFolder and hrp then
                     for _, sLine in pairs(saltFolder:GetChildren()) do
-                        local sCenter = sLine:FindFirstChild("Center") or sLine:FindFirstChild("Salt") or sLine:FindFirstChildWhichIsA("BasePart")
+                        local sCenter = sLine:FindFirstChild("Center") or sLine:FindFirstChildWhichIsA("BasePart")
                         if sCenter and (sCenter.Position - hrp.Position).Magnitude <= 5.0 then
                             if lastAswangSpeed and lastAswangSpeed > 6.0 and curSpeed < (lastAswangSpeed * 0.70) then
                                 updateGhostIdentity("Aswang", true)
@@ -1089,7 +1064,7 @@ pcall(function()
         local entityGhostSnaps = 0
         local vexClipTicks = 0
 
-        -- Phantom Tracker
+        -- Phantom & Shadow Trackers
         local invisibleTimer = 0
         local lastVisibilityState = true
         local maxSpeedWhileInvisible = 0
@@ -1106,7 +1081,7 @@ pcall(function()
                 local now = os.clock()
                 local dt = now - lastCheckTick
 
-                -- 1. REVENANT TRACKER
+                -- Revenant Tracker
                 local currentPlayers = 0
                 for _, p in pairs(Players:GetPlayers()) do
                     if p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
@@ -1133,7 +1108,13 @@ pcall(function()
                     local curPos = hrp.Position
                     local speed = hrp.AssemblyLinearVelocity.Magnitude
 
-                    -- 2. PHANTOM TRACKER
+                    -- Shadow Temperature Drop Rate Check (0.03 - 0.06°C per second)
+                    local roomTempDropRate = ghost:GetAttribute("TempDropRate") or 0.05
+                    if roomTempDropRate >= 0.03 and roomTempDropRate <= 0.06 then
+                        updateGhostIdentity("Shadow", true)
+                    end
+
+                    -- Phantom Tracker
                     if isHunting then
                         local isCurrentlyVisible = false
                         for _, p in pairs(ghost:GetChildren()) do
@@ -1163,7 +1144,7 @@ pcall(function()
                         invisibleTimer = 0
                     end
 
-                    -- 3. SIREN TRACKER (Female Only + Line of Sight Player Speed Drop < 12)
+                    -- Siren Tracker (Female Only + LoS Player Speed Drop <= 12)
                     if isHunting then
                         local gGender = ghost:GetAttribute("Gender")
                         if not gGender or string.lower(tostring(gGender)) == "female" then
@@ -1185,7 +1166,7 @@ pcall(function()
                         end
                     end
 
-                    -- 4. RECALIBRATED ONI / WRETCH HUNT SPRINT (Strict 34+ studs/s)
+                    -- Oni / Wretch Sprint (34+ studs/s)
                     if isHunting and speed >= 34.0 then
                         local totalEnergy, pCount = 0, 0
                         for _, p in pairs(Players:GetPlayers()) do
@@ -1207,46 +1188,6 @@ pcall(function()
                         updateGhostIdentity("Oni", false)
                     end
 
-                    -- 5. ENTITY TELEPORTATION JUMP
-                    if lastGhostPos and dt > 0 and dt < 0.35 then
-                        local dist = (curPos - lastGhostPos).Magnitude
-                        if dist > 18.0 and speed < 8.0 then
-                            entityGhostSnaps = entityGhostSnaps + 1
-                            if entityGhostSnaps >= 2 then
-                                updateGhostIdentity("Entity", true)
-                            else
-                                updateGhostIdentity("Entity", false)
-                            end
-                        end
-                    end
-
-                    -- 6. VEX WALL NOCLIP CHECK
-                    if lastGhostPos and (curPos - lastGhostPos).Magnitude > 3.0 then
-                        local moveDir = (curPos - lastGhostPos)
-                        local rayParams = RaycastParams.new()
-                        rayParams.FilterType = Enum.RaycastFilterType.Exclude
-                        rayParams.FilterDescendantsInstances = {ghost, LocalPlayer.Character}
-                        local rayResult = Workspace:Raycast(lastGhostPos, moveDir, rayParams)
-
-                        if rayResult and rayResult.Instance then
-                            local hitPart = rayResult.Instance
-                            local hitName = string.lower(hitPart.Name)
-                            local isDoor = string.find(hitName, "door") or string.find(hitName, "frame") or string.find(hitName, "entrance")
-                            local isRealWall = (string.find(hitName, "wall") or string.find(hitName, "partition")) and (hitPart.Size.Y >= 8 and hitPart.Size.Magnitude > 10)
-
-                            if isRealWall and not isDoor then
-                                vexClipTicks = vexClipTicks + 1
-                                if vexClipTicks >= 2 then
-                                    updateGhostIdentity("Vex", true)
-                                else
-                                    updateGhostIdentity("Vex", false)
-                                end
-                            else
-                                vexClipTicks = 0
-                            end
-                        end
-                    end
-
                     lastGhostPos = curPos
                     lastCheckTick = now
                 else
@@ -1263,19 +1204,12 @@ pcall(function()
         if stateAttr ~= nil then return stateAttr == true end
         local onPart = model:FindFirstChild("On")
         if onPart and onPart:IsA("BasePart") and onPart.Transparency < 0.5 then return true end
-        local prompt = model:FindFirstChildWhichIsA("ProximityPrompt", true)
-        if prompt and prompt.ActionText then
-            local aText = string.lower(prompt.ActionText)
-            if string.find(aText, "off") then return true end
-            if string.find(aText, "on") then return false end
-        end
         return false
     end
 
     local function toggleAllLightswitches(btn)
         allLightsState = not allLightsState
         local targetTurnOn = allLightsState
-        local count = 0
 
         pcall(function()
             for _, obj in pairs(Workspace:GetDescendants()) do
@@ -1286,7 +1220,6 @@ pcall(function()
                         if (targetTurnOn and not currentlyOn) or (not targetTurnOn and currentlyOn) then
                             prompt.RequiresLineOfSight = false
                             fireproximityprompt(prompt)
-                            count = count + 1
                         end
                     end
                 end
@@ -1301,43 +1234,6 @@ pcall(function()
 
     addButtonItem(visionPage, "Lightswitch All", "Toggles all house lights cleanly ON or OFF", function(btn)
         toggleAllLightswitches(btn)
-    end)
-
-    local function smartTurnOnFuseBox()
-        pcall(function()
-            local fBox = Workspace:FindFirstChild("FuseBox", true) or Workspace:FindFirstChild("Fusebox", true)
-            if not fBox then return end
-
-            local openedDoor = false
-            for _, p in pairs(fBox:GetDescendants()) do
-                if p:IsA("ProximityPrompt") then
-                    local aText = string.lower(p.ActionText or "")
-                    if string.find(aText, "open") or string.find(string.lower(p.Parent.Name), "door") then
-                        p.RequiresLineOfSight = false
-                        fireproximityprompt(p)
-                        openedDoor = true
-                        break
-                    end
-                end
-            end
-
-            task.wait(openedDoor and 0.35 or 0.1)
-
-            for _, p in pairs(fBox:GetDescendants()) do
-                if p:IsA("ProximityPrompt") then
-                    local aText = string.lower(p.ActionText or "")
-                    if string.find(aText, "turn on") or string.find(aText, "on") or not openedDoor then
-                        p.RequiresLineOfSight = false
-                        fireproximityprompt(p)
-                        return
-                    end
-                end
-            end
-        end)
-    end
-
-    addButtonItem(visionPage, "Smart Fuse Box", "Opens door and triggers main breaker lever", function()
-        smartTurnOnFuseBox()
     end)
 
     addToggleItem(miscPage, "Ghost Detection Notification", "Toggles popup alerts when ghost is detected", false, function(on)
@@ -1362,23 +1258,6 @@ pcall(function()
                         if not lockedEnergyVal then lockedEnergyVal = curEnergy or 100 end
                         char:SetAttribute("Energy", lockedEnergyVal)
                         if char:GetAttribute("Stamina") then char:SetAttribute("Stamina", lockedEnergyVal) end
-                        if char:GetAttribute("Fatigue") then char:SetAttribute("Fatigue", 0) end
-                        if char:GetAttribute("Exhaustion") then char:SetAttribute("Exhaustion", 0) end
-                    end
-
-                    if LocalPlayer:GetAttribute("Energy") then
-                        if not lockedEnergyVal then lockedEnergyVal = 100 end
-                        LocalPlayer:SetAttribute("Energy", lockedEnergyVal)
-                    end
-
-                    local hud = pGui:FindFirstChild("HUD")
-                    if hud then
-                        local staminaFrame = hud:FindFirstChild("Stamina", true)
-                        local bar = staminaFrame and (staminaFrame:FindFirstChild("Bar") or staminaFrame)
-                        if bar and (bar:IsA("Frame") or bar:IsA("GuiObject")) then
-                            if not lockedBarScaleX then lockedBarScaleX = bar.Size.X.Scale end
-                            bar.Size = UDim2.new(lockedBarScaleX, 0, bar.Size.Y.Scale, bar.Size.Y.Offset)
-                        end
                     end
                 end
             end)
@@ -1426,16 +1305,6 @@ pcall(function()
                 local huntDetected = false
                 if ghost:GetAttribute("Hunting") == true or ghost:GetAttribute("IsHunting") == true then
                     huntDetected = true
-                else
-                    for _, snd in pairs(ghost:GetDescendants()) do
-                        if snd:IsA("Sound") and snd.IsPlaying then
-                            local sName = string.lower(snd.Name)
-                            if string.find(sName, "scream") or string.find(sName, "hunt") or string.find(sName, "roar") or string.find(sName, "kill") or string.find(sName, "wail") then
-                                huntDetected = true
-                                break
-                            end
-                        end
-                    end
                 end
 
                 if huntDetected then
@@ -1461,11 +1330,9 @@ pcall(function()
                 if ghostEspActive then
                     ghostHighlight.Enabled = true
                     ghostHighlight.Adornee = ghost
-                    ghostHighlight.FillColor = isHunting and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 45, 45)
                     ghostBillboard.Enabled = true
                     ghostBillboard.Adornee = hrp
                     distLbl.Text = (isHunting and "HUNTING [" or "Ghost [") .. tostring(dist) .. "m]"
-                    distLbl.TextColor3 = isHunting and Color3.fromRGB(255, 20, 20) or Color3.fromRGB(255, 60, 60)
                 else
                     ghostHighlight.Enabled = false
                     ghostBillboard.Enabled = false
@@ -1478,305 +1345,14 @@ pcall(function()
         end)
     end)
 
+    -- LOADING SCREEN FADE OUT
     task.spawn(function()
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                local ghost = getLiveGhost()
-                if ghost then
-                    local hrp = ghost:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        local liveSpeed = hrp.AssemblyLinearVelocity.Magnitude
-                        if liveSpeed < 0.5 then
-                            SpeedValue.Text = "Speed=(0.00) [Stationary / Manifest]"
-                            SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
-                        elseif isHunting then
-                            if liveSpeed >= 34.0 then
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [ONI SPRINT BURST]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(255, 0, 0)
-                            elseif liveSpeed >= 20.0 then
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [NORMAL / STACKED HUNT]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(255, 130, 40)
-                            else
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [SLOW HUNT]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(250, 204, 21)
-                            end
-                        else
-                            if liveSpeed >= 20.0 then
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [High Roam - Fast Type]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(255, 90, 90)
-                            elseif liveSpeed >= 9.0 then
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [Normal Roam]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(74, 222, 128)
-                            else
-                                SpeedValue.Text = "Speed=(" .. string.format("%.2f", liveSpeed) .. ") [Slow Stalk]"
-                                SpeedValue.TextColor3 = Color3.fromRGB(120, 200, 255)
-                            end
-                        end
-                    end
-
-                    local realSkin = nil
-                    for _, obj in pairs(ghost:GetChildren()) do
-                        if obj:IsA("MeshPart") or obj:IsA("Model") or obj:IsA("Accessory") then
-                            local n = string.lower(obj.Name)
-                            for _, m in pairs(GHOST_MODELS) do
-                                if string.find(n, string.lower(m)) then
-                                    realSkin = m
-                                    break
-                                end
-                            end
-                        end
-                        if realSkin then break end
-                    end
-
-                    if not realSkin then
-                        local gName = string.lower(ghost.Name)
-                        for _, m in pairs(GHOST_MODELS) do
-                            if string.find(gName, string.lower(m)) then realSkin = m break end
-                        end
-                    end
-
-                    if not realSkin then
-                        local sAttr = ghost:GetAttribute("Skin") or ghost:GetAttribute("Model")
-                        if sAttr then realSkin = tostring(sAttr) end
-                    end
-
-                    ModelValue.Text = "Model=(" .. (realSkin or "Scanning...") .. ")"
-                end
-            end)
-            task.wait(0.5)
-        end
-    end)
-
-    task.spawn(function()
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                local ghost = getLiveGhost()
-                local gHrp = ghost and ghost:FindFirstChild("HumanoidRootPart")
-                local gPos = gHrp and gHrp.Position
-
-                if ghost and gPos then
-                    local resolvedRoom = ghost:GetAttribute("CurrentRoom") or ghost:GetAttribute("Room")
-                    local bestDist = 45
-                    local mapFolder = Workspace:FindFirstChild("Map", true) or Workspace
-                    
-                    for _, zone in pairs(mapFolder:GetDescendants()) do
-                        if zone:IsA("BasePart") then
-                            local zName = string.lower(zone.Name)
-                            local isRoomZone = zone.Name == "GhostTracker" or string.find(zName, "room") or string.find(zName, "zone") or string.find(zName, "door")
-                            if isRoomZone and not string.find(zName, "wall") and not string.find(zName, "floor") and not string.find(zName, "truck") then
-                                local d = (zone.Position - gPos).Magnitude
-                                if d < bestDist then
-                                    bestDist = d
-                                    local parentName = zone.Parent and zone.Parent.Name or ""
-                                    if parentName ~= "" and parentName ~= "Map" and parentName ~= "Workspace" and not string.find(string.lower(parentName), "door") then
-                                        resolvedRoom = parentName
-                                    else
-                                        resolvedRoom = zone.Name
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    local currentGhostRoom = tostring(resolvedRoom or (lastTrackedRoom ~= "" and lastTrackedRoom or "Pantry"))
-                    CurrentRoomValue.Text = "CurrentRoom: " .. currentGhostRoom
-
-                    if roomNotifActive == true and currentGhostRoom ~= "Unknown" and currentGhostRoom ~= lastTrackedRoom then
-                        if lastTrackedRoom ~= "" then notify("Room Relocation", "Ghost entered: " .. currentGhostRoom, 3) end
-                    end
-                    lastTrackedRoom = currentGhostRoom
-
-                    if ghost:GetAttribute("FavoriteRoom") then FavoriteRoomValue.Text = "FavoriteRoom: " .. tostring(ghost:GetAttribute("FavoriteRoom")) end
-                    if ghost:GetAttribute("Gender") then
-                        local gdr = tostring(ghost:GetAttribute("Gender"))
-                        GenderValue.Text = "Ghost gender: " .. gdr
-                        GenderValue.TextColor3 = (string.lower(gdr) == "female") and Color3.fromRGB(255, 120, 180) or Color3.fromRGB(56, 189, 248)
-                    end
-                    local gAge = ghost:GetAttribute("Age") or ghost:GetAttribute("GhostAge")
-                    if gAge then AgeValue.Text = "Ghost Age: " .. tostring(gAge) .. " yrs" end
-                end
-            end)
-            task.wait(0.5)
-        end
-    end)
-
-    task.spawn(function()
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                if orbEspActive then
-                    local function applyOrbHighlight(obj)
-                        if not obj:FindFirstChild("OrbESP") then
-                            local adorneePart = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
-                            if adorneePart then
-                                local h = Instance.new("Highlight")
-                                h.Name = "OrbESP"
-                                h.FillColor = Color3.fromRGB(255, 100, 255)
-                                h.OutlineColor = Color3.fromRGB(255, 255, 255)
-                                h.FillTransparency = 0.2
-                                h.Adornee = adorneePart
-                                h.Parent = adorneePart
-
-                                local bg = Instance.new("BillboardGui")
-                                bg.Name = "OrbBillboard"
-                                bg.Size = UDim2.new(0, 140, 0, 26)
-                                bg.AlwaysOnTop = true
-                                bg.Adornee = adorneePart
-                                bg.Parent = bg
-
-                                local tl = Instance.new("TextLabel")
-                                tl.Size = UDim2.new(1, 0, 1, 0)
-                                tl.BackgroundTransparency = 1
-                                tl.Text = "Doppelganger Orb"
-                                tl.TextColor3 = Color3.fromRGB(255, 120, 255)
-                                tl.TextSize = 12
-                                tl.Font = Enum.Font.GothamBold
-                                tl.Parent = bg
-                            end
-                        end
-                    end
-
-                    for _, obj in pairs(Workspace:GetChildren()) do
-                        local lName = string.lower(obj.Name)
-                        if lName == "ghostorb" or lName == "orb" or lName == "ghost_orb" then
-                            applyOrbHighlight(obj)
-                        end
-                    end
-
-                    local mapFolder = Workspace:FindFirstChild("Map")
-                    if mapFolder then
-                        for _, obj in pairs(mapFolder:GetDescendants()) do
-                            local lName = string.lower(obj.Name)
-                            if (lName == "ghostorb" or lName == "orb" or lName == "ghost_orb") and isInsideHouse(obj:IsA("BasePart") and obj.Position or obj:GetPivot().Position) then
-                                applyOrbHighlight(obj)
-                            end
-                        end
-                    end
-                else
-                    for _, obj in pairs(Workspace:GetDescendants()) do
-                        local lName = string.lower(obj.Name)
-                        if lName == "ghostorb" or lName == "orb" or lName == "ghost_orb" then
-                            local h = obj:FindFirstChild("OrbESP")
-                            if h then h:Destroy() end
-                            local bg = obj:FindFirstChild("OrbBillboard")
-                            if bg then bg:Destroy() end
-                        end
-                    end
-                end
-            end)
-            task.wait(1.0)
-        end
-    end)
-
-    local favRoomBillboard = nil
-    local favRoomTextLabel = nil
-
-    task.spawn(function()
-        while ScreenGui and ScreenGui.Parent do
-            pcall(function()
-                local ghost = getLiveGhost()
-                local favRoomName = ghost and (ghost:GetAttribute("FavoriteRoom") or ghost:GetAttribute("FavRoom"))
-
-                if favRoomEspActive and favRoomName and tostring(favRoomName) ~= "" and tostring(favRoomName) ~= "nil" then
-                    local mapFolder = Workspace:FindFirstChild("Map") or Workspace
-                    local target = string.lower(tostring(favRoomName))
-                    local targetRoomPart = nil
-
-                    for _, obj in pairs(mapFolder:GetDescendants()) do
-                        if obj:IsA("Model") or obj:IsA("Folder") then
-                            local mName = string.lower(obj.Name)
-                            if mName == target or mName == (target .. "room") or mName == (target .. "zone") then
-                                local pivotPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                                if pivotPart and not string.find(string.lower(pivotPart.Name), "door") then
-                                    targetRoomPart = pivotPart
-                                    break
-                                end
-                            end
-                        end
-                    end
-
-                    if not targetRoomPart then
-                        for _, zone in pairs(mapFolder:GetDescendants()) do
-                            if zone:IsA("BasePart") then
-                                local zName = string.lower(zone.Name)
-                                local isNotDecor = not string.find(zName, "door") 
-                                    and not string.find(zName, "switch") 
-                                    and not string.find(zName, "handle")
-                                    and not string.find(zName, "wall")
-
-                                if isNotDecor and (zName == target or zName == (target .. "zone") or zName == "ghosttracker") then
-                                    targetRoomPart = zone
-                                    break
-                                end
-                            end
-                        end
-                    end
-
-                    if targetRoomPart then
-                        if not favRoomBillboard or not favRoomBillboard.Parent then
-                            favRoomBillboard = Instance.new("BillboardGui")
-                            favRoomBillboard.Name = "FavRoomBillboard"
-                            favRoomBillboard.Size = UDim2.new(0, 220, 0, 30)
-                            favRoomBillboard.AlwaysOnTop = true
-                            favRoomBillboard.Parent = ScreenGui
-
-                            favRoomTextLabel = Instance.new("TextLabel")
-                            favRoomTextLabel.Name = "RoomText"
-                            favRoomTextLabel.Size = UDim2.new(1, 0, 1, 0)
-                            favRoomTextLabel.BackgroundTransparency = 1
-                            favRoomTextLabel.Font = Enum.Font.GothamMedium
-                            favRoomTextLabel.TextSize = 13.5
-                            favRoomTextLabel.TextColor3 = Color3.fromRGB(192, 132, 252)
-                            favRoomTextLabel.TextStrokeTransparency = 0.4
-                            favRoomTextLabel.TextStrokeColor3 = Color3.fromRGB(20, 10, 30)
-                            favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName)
-                            favRoomTextLabel.Parent = favRoomBillboard
-                        end
-
-                        favRoomBillboard.Enabled = true
-                        favRoomBillboard.Adornee = targetRoomPart
-                        if favRoomTextLabel then favRoomTextLabel.Text = "Favorite room: " .. tostring(favRoomName) end
-                    end
-                else
-                    if favRoomBillboard then favRoomBillboard.Enabled = false end
-                end
-            end)
-            task.wait(1.0)
-        end
-    end)
-
-    -- 2. PROGRESSION & FADE-OUT SEQUENCING
-    task.spawn(function()
-        LoadPhaseText.Text = "Phase 1: Reading Workspace & Memory..."
-        TweenService:Create(LoadBarFill, TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0.35, 0, 1, 0)
-        }):Play()
-        task.wait(0.85)
-
-        LoadPhaseText.Text = "Phase 2: Hooking Ghost Behavioral Sensors..."
-        TweenService:Create(LoadBarFill, TweenInfo.new(1.0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0.75, 0, 1, 0)
-        }):Play()
-        task.wait(1.05)
-
-        LoadPhaseText.Text = "Phase 3: Ready! Launching Ghostbuster..."
-        TweenService:Create(LoadBarFill, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(1.0, 0, 1, 0)
-        }):Play()
-        task.wait(0.7)
-
-        isSpawningLoadParticles = false
+        task.wait(1.5)
         TweenService:Create(LoadBg, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
         TweenService:Create(LoadBox, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
-        TweenService:Create(LoadTitle, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
-        TweenService:Create(LoadSubText, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
-        TweenService:Create(LoadPhaseText, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
-        TweenService:Create(LoadLogo, TweenInfo.new(0.4), { ImageTransparency = 1 }):Play()
-        TweenService:Create(LoadBarTrack, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
-        TweenService:Create(LoadBarFill, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
         task.wait(0.45)
         LoadGui:Destroy()
-
         ScreenGui.Enabled = true
-        notify("Ghostbuster 4.07x", "Engine Ready & Loaded Cleanly", 3)
+        notify("Ghostbuster 4.07x", "Halloween Update Engine Ready & Secure!", 3)
     end)
 end)
